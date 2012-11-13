@@ -1,5 +1,5 @@
 def directed_spr(G, n_rewires=10, weighted='out'):
-    from numpy import randint
+    from numpy.random import randint
 
     g = G.copy()
     nes = len(g.es)
@@ -24,7 +24,6 @@ def directed_spr(G, n_rewires=10, weighted='out'):
             continue
 
         g.delete_edges([e1, e2])
-        #print(m-n)
         if weighted == 'out':  # Rewire the outgoing connections
             g.add_edge(s1, t2, **a1)
             g.add_edge(s2, t1, **a2)
@@ -36,8 +35,6 @@ def directed_spr(G, n_rewires=10, weighted='out'):
         #for 'weighted' produces the same (correct) randomization, while preserving in degree
         # and out degree for each node
 
-        #des.append(len(g.es)-n)
-        #tes.append(len(g.es))
         i += 1
     return g
 
@@ -70,7 +67,8 @@ def rich_nodes(graph, fraction=0.1, highest=True, scores=None):
     return indices
 
 
-def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None, rewire=1000, average=1, control=None):
+def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
+    rewire=1000, average=1, control=None):
     if type(fraction) == float:
         fraction = [fraction]
 
