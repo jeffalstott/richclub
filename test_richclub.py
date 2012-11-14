@@ -9,8 +9,8 @@ class FirstTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Called once before all tests in this class."""
-        ns = [6, ]
-        ms = [5, ]
+        ns = [60, ]
+        ms = [30, ]
         directeds = [True, False]
         n_rewiress = [10, ]
         preserves = ['out', 'in']
