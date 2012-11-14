@@ -1,4 +1,4 @@
-def directed_spr(G, n_rewires=10, weighted='out'):
+def directed_spr(G, n_rewires=10, preserve='out'):
     from numpy.random import randint
 
     g = G.copy()
@@ -24,10 +24,10 @@ def directed_spr(G, n_rewires=10, weighted='out'):
             continue
 
         g.delete_edges([e1, e2])
-        if weighted == 'out':  # Rewire the outgoing connections
+        if preserve == 'out':  # Rewire the outgoing connections
             g.add_edge(s1, t2, **a1)
             g.add_edge(s2, t1, **a2)
-        elif weighted == 'in':  # Rewire the incoming connections
+        elif preserve == 'in':  # Rewire the incoming connections
             #Only difference is in the weight assignments
             g.add_edge(s1, t2, **a2)
             g.add_edge(s2, t1, **a1)
@@ -131,7 +131,7 @@ def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
         control_rc_coefficient = zeros(len(fraction))
         for i in range(average):
             random_graph = directed_spr(
-                graph, n_rewires=rewire, weighted=randomization)
+                graph, n_rewires=rewire, preserve=randomization)
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
                     random_graph, fraction=fraction, highest=highest,

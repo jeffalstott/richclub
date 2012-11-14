@@ -11,27 +11,27 @@ class FirstTestCase(unittest.TestCase):
         """Called once before all tests in this class."""
         ns = [6, ]
         ms = [10, ]
-        directeds = [False, True]
+        directeds = [True, False]
         n_rewiress = [10, ]
-        weighteds = ['out', 'in']
-        weight_ons = [False, True]
+        preserves = ['out', 'in']
+        weight_ons = [True, False]
 
-        cls.test_cases = [(n, m, directed, n_rewires, weighted, weight_on)
+        cls.test_cases = [(n, m, directed, n_rewires, preserve, weight_on)
                           for n in ns
                           for m in ms
                           for directed in directeds
                           for n_rewires in n_rewiress
-                          for weighted in weighteds
+                          for preserve in preserves
                           for weight_on in weight_ons]
     pass
 
     def test_directed_spr(self):
         """All methods beginning with 'test' are executed"""
 
-        for n, m, directed, n_rewires, weighted, weight_on in self.test_cases:
-            print "%i nodes, %i links, directed: %i, %i rewires,"\
-            "preserving %s, weights on: %i"\
-            % (n, m, directed, n_rewires, weighted, weight_on)
+        for n, m, directed, n_rewires, preserve, weight_on in self.test_cases:
+            print "%i nodes, %i links, directed: %i, %i rewires, "\
+                "preserving %s, weights on: %i"\
+                % (n, m, directed, n_rewires, preserve, weight_on)
 
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
 
@@ -40,7 +40,7 @@ class FirstTestCase(unittest.TestCase):
                 g.es["weight"] = rand(m)
 
             gr = richclub.directed_spr(g, n_rewires=n_rewires,
-                                       weighted=weighted)
+                                       preserve=preserve)
 
             self.assertTrue(g.is_weighted() == gr.is_weighted())
             self.assertTrue(len(g.vs) == len(gr.vs))
@@ -52,9 +52,9 @@ class FirstTestCase(unittest.TestCase):
 
             if weight_on:
                 from numpy import sort, all
-                if weighted == 'out':
+                if preserve == 'out':
                     mode = 1
-                if weighted == 'in':
+                if preserve == 'in':
                     mode = 2
                 self.assertTrue(
                     all(sort(g.strength(mode=mode, weights=g.es["weight"]))
