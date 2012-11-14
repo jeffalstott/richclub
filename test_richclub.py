@@ -9,27 +9,29 @@ class FirstTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Called once before all tests in this class."""
-        ns = [6, 30]
-        ms = [10, 50]
-        directeds = [True, False]
+        ns = [6, ]
+        ms = [10, ]
+        directeds = [False, True]
         n_rewiress = [10, ]
         weighteds = ['out', 'in']
-        weight_ons = [True, False]
+        weight_ons = [False, True]
 
         cls.test_cases = [(n, m, directed, n_rewires, weighted, weight_on)
-                      for n in ns
-                      for m in ms
-                      for directed in directeds
-                      for n_rewires in n_rewiress
-                      for weighted in weighteds
-                      for weight_on in weight_ons]
+                          for n in ns
+                          for m in ms
+                          for directed in directeds
+                          for n_rewires in n_rewiress
+                          for weighted in weighteds
+                          for weight_on in weight_ons]
     pass
 
     def test_directed_spr(self):
         """All methods beginning with 'test' are executed"""
 
         for n, m, directed, n_rewires, weighted, weight_on in self.test_cases:
-            print n, m, directed, n_rewires, weighted, weight_on
+            print "%i nodes" % n, "%i links" % m, "Directed: " + directed,
+            "%i rewires" % n_rewires, "Preserving " + weighted,
+            "Weights on: " + weight_on
 
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
 
