@@ -29,12 +29,9 @@ class FirstTestCase(unittest.TestCase):
         """All methods beginning with 'test' are executed"""
 
         for n, m, directed, n_rewires, weighted, weight_on in self.test_cases:
-            print "%i nodes" % n,
-            "%i links" % m,
-            "Directed: %i" % directed,
-            "%i rewires" % n_rewires,
-            "Preserving %s" % weighted,
-            "Weights on: %i" % weight_on
+            print "%i nodes, %i links, directed: %i, %i rewires,"\
+            "preserving %s, weights on: %i"\
+            % (n, m, directed, n_rewires, weighted, weight_on)
 
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
 
