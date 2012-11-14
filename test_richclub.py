@@ -7,9 +7,9 @@ import richclub
 class FirstTestCase(unittest.TestCase):
     def test_directed_spr(self):
         """All methods beginning with 'test' are executed"""
-        ns = [6, ]
-        ms = [10, ]
-        directeds = [True, ]
+        ns = [6, 30]
+        ms = [10, 50]
+        directeds = [True, False]
         n_rewiress = [10, ]
         weighteds = ['out', 'in']
         weight_ons = [True, False]
@@ -23,6 +23,8 @@ class FirstTestCase(unittest.TestCase):
             for weight_on in weight_ons]
 
         for n, m, directed, n_rewires, weighted, weight_on in test_space:
+
+            print n m directed n_rewires weighted weight_on
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
 
             if weight_on:
