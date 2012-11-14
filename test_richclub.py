@@ -34,7 +34,7 @@ class FirstTestCase(unittest.TestCase):
             "Directed: %i" % directed,
             "%i rewires" % n_rewires,
             "Preserving %s" % weighted,
-            "Weights on: %i" + weight_on
+            "Weights on: %i" % weight_on
 
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
 
