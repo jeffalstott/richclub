@@ -51,7 +51,7 @@ class FirstTestCase(unittest.TestCase):
                 assert_array_equal(
                     g.strength(mode=mode),
                     gr.strength(mode=mode),
-                    msg="Degree sequence not equal in mode %i" % mode)
+                    err_msg="Degree sequence not equal in mode %i" % mode)
 
             if weight_on:
                 from numpy import sort
@@ -66,7 +66,7 @@ class FirstTestCase(unittest.TestCase):
                 assert_array_equal(
                     sort(g.strength(mode=mode, weights=g.es["weight"])),
                     sort(gr.strength(mode=mode, weights=gr.es["weight"])),
-                    msg="Strength sequence not equal")
+                    err_msg="Strength sequence not equal")
 
     def test_rich_nodes(self):
         """Docstrings are printed during executions
