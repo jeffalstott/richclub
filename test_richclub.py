@@ -14,7 +14,7 @@ class FirstTestCase(unittest.TestCase):
         directeds = [True, False]
         n_rewiress = [10, ]
         preserves = ['out', 'in']
-        weight_ons = [True, False]
+        weight_ons = [False, True]
 
         cls.test_cases = [(n, m, directed, n_rewires, preserve, weight_on)
                           for n in ns
@@ -56,6 +56,9 @@ class FirstTestCase(unittest.TestCase):
                     mode = 1
                 if preserve == 'in':
                     mode = 2
+                print sort(g.strength(mode=mode, weights=g.es["weight"]))
+                print sort(gr.strength(mode=mode, weights=gr.es["weight"]))
+
                 self.assertTrue(
                     all(sort(g.strength(mode=mode, weights=g.es["weight"]))
                         ==
