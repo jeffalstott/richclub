@@ -27,9 +27,10 @@ class FirstTestCase(unittest.TestCase):
         for mode in [1, 2, 3]:
             self.assertTrue(g.strength(mode=mode) == gr.strength(mode=mode))
             if weights:
+                from numpy import sort
                 self.assertTrue(
-                    g.strength(mode=mode, weights=g.es["weight"])
-                    == gr.strength(mode=mode, weights=gr.es["weight"]))
+                    sort(g.strength(mode=mode, weights=g.es["weight"]))
+                    == sort(gr.strength(mode=mode, weights=gr.es["weight"])))
 
     def test_rich_nodes(self):
         """Docstrings are printed during executions
