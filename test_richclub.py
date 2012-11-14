@@ -6,7 +6,7 @@ import richclub
 
 class FirstTestCase(unittest.TestCase):
     def test_directed_spr(self):
-        """All methods beginning with ’test’ are executed"""
+        """All methods beginning with 'test' are executed"""
         n = 6
         m = 10
         directed = True
@@ -14,10 +14,11 @@ class FirstTestCase(unittest.TestCase):
         n_rewires = 10
         weighted = 'out'
         weights = True
-        gr = richclub.directed_spr(g, n_rewires=n_rewires, weighted=weighted)
         if weights:
             from numpy.random import rand
             g.es["weight"] = rand(m)
+
+        gr = richclub.directed_spr(g, n_rewires=n_rewires, weighted=weighted)
 
         self.assertTrue(g.is_weighted() == gr.is_weighted())
         self.assertTrue(len(g.vs) == len(gr.vs))
