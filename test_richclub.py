@@ -7,34 +7,49 @@ import richclub
 class FirstTestCase(unittest.TestCase):
     def test_directed_spr(self):
         """All methods beginning with 'test' are executed"""
-        n = 6
-        m = 10
-        directed = True
-        g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
-        n_rewires = 10
-        weighted = 'out'
-        weights = True
-        if weights:
-            from numpy.random import rand
-            g.es["weight"] = rand(m)
+        ns = [6, ]
+        ms = [10, ]
+        directeds = [True, ]
+        n_rewiress = [10, ]
+        weighteds = ['out', 'in']
+        weight_ons = [True, False]
 
-        gr = richclub.directed_spr(g, n_rewires=n_rewires, weighted=weighted)
+        test_space = (n, m, directed, n_rewires, weighted, weight_on) for n in ns \
+            for m in ms \
+            for directed in directeds \
+            for n_rewires in n_rewiress \
+            for weighted in weighteds \
+            for weight_on in weight_ons
 
-        self.assertTrue(g.is_weighted() == gr.is_weighted())
-        self.assertTrue(len(g.vs) == len(gr.vs))
-        self.assertTrue(len(g.es) == len(gr.es))
+        for n, m, directed, n_rewires, weighted, weight_on in test_space:
+            g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
 
-        for mode in [1, 2, 3]:
-            self.assertTrue(g.strength(mode=mode) == gr.strength(mode=mode))
-        if weights:
-            from numpy import sort, all
-            if weighted == 'out':
-                mode = 1
-            if weighted == 'in':
-                mode = 2
-            self.assertTrue(
-                all(sort(g.strength(mode=mode, weights=g.es["weight"]))
-                    == sort(gr.strength(mode=mode, weights=gr.es["weight"]))))
+            if weights:
+                from numpy.random import rand
+                g.es["weight"] = rand(m)
+
+            gr = richclub.directed_spr(g, n_rewires=n_rewires,
+                                       weighted=weighted)
+
+            self.assertTrue(g.is_weighted() == gr.is_weighted())
+            self.assertTrue(len(g.vs) == len(gr.vs))
+            self.assertTrue(len(g.es) == len(gr.es))
+
+            for mode in [1, 2, 3]:
+                self.assertTrue(g.strength(mode=mode)
+                                == gr.strength(mode=mode))
+
+            if weight_on:
+                from numpy import sort, all
+                if weighted == 'out':
+                    mode = 1
+                if weighted == 'in':
+                    mode = 2
+                self.assertTrue(
+                    all(sort(g.strength(mode=mode, weights=g.es["weight"]))
+                        ==
+                        sort(gr.strength(mode=mode, weights=gr.es["weight"]))
+                        ))
 
     def test_rich_nodes(self):
         """Docstrings are printed during executions
