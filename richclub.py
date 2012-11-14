@@ -21,6 +21,7 @@ def directed_spr(G, n_rewires=10, preserve='out'):
         #If either of the to-be-newly-wired connections already exist, roll again.
         #This prevents multiple edges going in the same direction between two nodes.
         if t2 in g.neighbors(s1, mode=1) or t1 in g.neighbors(s2, mode=1):
+            print "Already neighbors, stuck at %i"%i
             continue
 
         g.delete_edges([e1, e2])
