@@ -60,7 +60,7 @@ class FirstTestCase(unittest.TestCase):
                     mode = 1
                 if preserve == 'in':
                     mode = 2
-                if directed:
+                if not directed:
                     mode = 3
                 print sort(g.strength(mode=mode, weights=g.es["weight"]))
                 print sort(gr.strength(mode=mode, weights=gr.es["weight"]))
