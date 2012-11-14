@@ -28,9 +28,9 @@ class FirstTestCase(unittest.TestCase):
             self.assertTrue(g.strength(mode=mode) == gr.strength(mode=mode))
         if weights:
             from numpy import sort, all
-            if weights == 'out':
+            if weighted == 'out':
                 mode = 1
-            if weights == 'in':
+            if weighted == 'in':
                 mode = 2
             self.assertTrue(
                 all(sort(g.strength(mode=mode, weights=g.es["weight"]))
