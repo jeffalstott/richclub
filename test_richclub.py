@@ -2,7 +2,7 @@ import unittest
 
 from igraph import Graph
 import richclub
-from numpy.testing import assert_array_equal
+from numpy.testing import assert_array_equal, assert_allclose
 
 
 class FirstTestCase(unittest.TestCase):
@@ -63,7 +63,7 @@ class FirstTestCase(unittest.TestCase):
                 print sort(g.strength(mode=mode, weights=g.es["weight"]))
                 print sort(gr.strength(mode=mode, weights=gr.es["weight"]))
 
-                assert_array_equal(
+                assert_allclose(
                     sort(g.strength(mode=mode, weights=g.es["weight"])),
                     sort(gr.strength(mode=mode, weights=gr.es["weight"])),
                     err_msg="Strength sequence not equal")
