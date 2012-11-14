@@ -5,8 +5,10 @@ import richclub
 
 
 class FirstTestCase(unittest.TestCase):
-    def test_directed_spr(self):
-        """All methods beginning with 'test' are executed"""
+
+    @classmethod
+    def setUpClass(cls):
+        """Called once before all tests in this class."""
         ns = [6, 30]
         ms = [10, 50]
         directeds = [True, False]
@@ -14,17 +16,21 @@ class FirstTestCase(unittest.TestCase):
         weighteds = ['out', 'in']
         weight_ons = [True, False]
 
-        test_space = [(n, m, directed, n_rewires, weighted, weight_on)
-            for n in ns
-            for m in ms
-            for directed in directeds
-            for n_rewires in n_rewiress
-            for weighted in weighteds
-            for weight_on in weight_ons]
+        cls.test_cases = [(n, m, directed, n_rewires, weighted, weight_on)
+                      for n in ns
+                      for m in ms
+                      for directed in directeds
+                      for n_rewires in n_rewiress
+                      for weighted in weighteds
+                      for weight_on in weight_ons]
+    pass
 
-        for n, m, directed, n_rewires, weighted, weight_on in test_space:
+    def test_directed_spr(self):
+        """All methods beginning with 'test' are executed"""
 
-            print n m directed n_rewires weighted weight_on
+        for n, m, directed, n_rewires, weighted, weight_on in self.test_cases:
+            print n, m, directed, n_rewires, weighted, weight_on
+
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
 
             if weight_on:
