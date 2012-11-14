@@ -2,6 +2,7 @@ import unittest
 
 from igraph import Graph
 import richclub
+from numpy.testing import assert_array_equal
 
 
 class FirstTestCase(unittest.TestCase):
@@ -14,7 +15,7 @@ class FirstTestCase(unittest.TestCase):
         directeds = [True, False]
         n_rewiress = [2, ]
         preserves = ['in', 'out']
-        weight_ons = [False, True]
+        weight_ons = [True, ]
 
         cls.test_cases = [(n, m, directed, n_rewires, preserve, weight_on)
                           for n in ns
@@ -42,16 +43,19 @@ class FirstTestCase(unittest.TestCase):
             gr = richclub.directed_spr(g, n_rewires=n_rewires,
                                        preserve=preserve)
 
-            self.assertTrue(g.is_weighted() == gr.is_weighted())
-            self.assertTrue(len(g.vs) == len(gr.vs))
-            self.assertTrue(len(g.es) == len(gr.es))
+            self.assertEqual(g.is_weighted(), gr.is_weighted())
+            self.assertEqual(len(g.vs), len(gr.vs))
+            self.assertEqual(len(g.es), len(gr.es))
 
             for mode in [1, 2, 3]:
-                self.assertTrue(g.strength(mode=mode)
-                                == gr.strength(mode=mode))
+                assert_array_equal(
+                    g.strength(mode=mode),
+                    gr.strength(mode=mode),
+                    msg="Degree sequence not equal in mode %i" % mode)
 
             if weight_on:
-                from numpy import sort, all
+                from numpy import sort
+
                 if preserve == 'out':
                     mode = 1
                 if preserve == 'in':
@@ -59,11 +63,10 @@ class FirstTestCase(unittest.TestCase):
                 print sort(g.strength(mode=mode, weights=g.es["weight"]))
                 print sort(gr.strength(mode=mode, weights=gr.es["weight"]))
 
-                self.assertTrue(
-                    all(sort(g.strength(mode=mode, weights=g.es["weight"]))
-                        ==
-                        sort(gr.strength(mode=mode, weights=gr.es["weight"]))
-                        ))
+                assert_array_equal(
+                    sort(g.strength(mode=mode, weights=g.es["weight"])),
+                    sort(gr.strength(mode=mode, weights=gr.es["weight"])),
+                    msg="Strength sequence not equal")
 
     def test_rich_nodes(self):
         """Docstrings are printed during executions
