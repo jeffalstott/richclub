@@ -14,17 +14,18 @@ class FirstTestCase(unittest.TestCase):
         weighteds = ['out', 'in']
         weight_ons = [True, False]
 
-        test_space = (n, m, directed, n_rewires, weighted, weight_on) for n in ns \
-            for m in ms \
-            for directed in directeds \
-            for n_rewires in n_rewiress \
-            for weighted in weighteds \
-            for weight_on in weight_ons
+        test_space = [(n, m, directed, n_rewires, weighted, weight_on)
+            for n in ns
+            for m in ms
+            for directed in directeds
+            for n_rewires in n_rewiress
+            for weighted in weighteds
+            for weight_on in weight_ons]
 
         for n, m, directed, n_rewires, weighted, weight_on in test_space:
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
 
-            if weights:
+            if weight_on:
                 from numpy.random import rand
                 g.es["weight"] = rand(m)
 
