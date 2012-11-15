@@ -22,7 +22,7 @@ def directed_spr(G, n_rewires=10, preserve='out'):
         #This prevents multiple edges going in the same direction between two nodes.
         if t2 in g.neighbors(s1, mode=1) or t1 in g.neighbors(s2, mode=1):
             continue
-
+        #NEED TO FIX BEHAVIOR FOR V LINKS REWIRING (As in, they're presently not!)
         g.delete_edges([e1, e2])
         if preserve == 'out':  # Rewire the outgoing connections
             g.add_edge(s1, t2, **a1)
