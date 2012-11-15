@@ -12,7 +12,7 @@ class FirstTestCase(unittest.TestCase):
         """Called once before all tests in this class."""
         ns = [60, ]
         ms = [60, ]
-        directeds = [True, False]
+        directeds = [True, ]  # Not designed to work with undirected graphs
         n_rewiress = [2, ]
         preserves = ['out', 'in']
         weight_ons = [False, True]

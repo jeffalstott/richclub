@@ -5,11 +5,18 @@ def directed_spr(G, n_rewires=10, preserve='out'):
     nes = len(g.es)
 
     i = 0
+    rerolls = 0
     while i < (n_rewires * nes):
+        if rerolls > n_rewires * nes:
+            print "Halted after %i failed rewirings and"\
+            "%i successful rewirings" % (rerolls, i)
+            return g
+
         e1 = randint(nes)
         e2 = randint(nes)
         #In case we select the same edge twice, roll again.
         if e1 == e2:
+            rerolls += 1
             continue
 
         s1 = g.es[e1].source
@@ -18,9 +25,18 @@ def directed_spr(G, n_rewires=10, preserve='out'):
         s2 = g.es[e2].source
         t2 = g.es[e2].target
         a2 = g.es[e2].attributes()
+
+        #If s1 and s2 are the same, and we are preserving in strength, roll again.
+        #This is because rewiring wouldn't accomplish anything.
+        #The reverse is true if t1 and t2 are the same.
+        if (s1 == s2 and preserve == 'in') or (t1 == t2 and preserve == 'out'):
+            rerolls += 1
+            continue
+
         #If either of the to-be-newly-wired connections already exist, roll again.
         #This prevents multiple edges going in the same direction between two nodes.
         if t2 in g.neighbors(s1, mode=1) or t1 in g.neighbors(s2, mode=1):
+            rerolls += 1
             continue
         #NEED TO FIX BEHAVIOR FOR V LINKS REWIRING (As in, they're presently not!)
         g.delete_edges([e1, e2])
@@ -68,7 +84,7 @@ def rich_nodes(graph, fraction=0.1, highest=True, scores=None):
 
 
 def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
-    rewire=1000, average=1, control=None):
+                          rewire=1000, average=1, control=None):
     if type(fraction) == float:
         fraction = [fraction]
 
