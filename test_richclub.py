@@ -3,6 +3,7 @@ import unittest
 from igraph import Graph
 import richclub
 from numpy.testing import assert_array_equal, assert_allclose
+from numpy import all
 
 
 class FirstTestCase(unittest.TestCase):
@@ -29,7 +30,22 @@ class FirstTestCase(unittest.TestCase):
     def test_directed_spr(self):
         """All methods beginning with 'test' are executed"""
 
-        for n, m, directed, n_rewires, preserve, weight_on in self.test_cases:
+        ns = [60, ]
+        ms = [60, 10, 600]
+        directeds = [True, ]  # Not designed to work with undirected graphs
+        n_rewiress = [2, 10]
+        preserves = ['out', 'in']
+        weight_ons = [False, True]
+
+        test_cases = [(n, m, directed, n_rewires, preserve, weight_on)
+                      for n in ns
+                      for m in ms
+                      for directed in directeds
+                      for n_rewires in n_rewiress
+                      for preserve in preserves
+                      for weight_on in weight_ons]
+
+        for n, m, directed, n_rewires, preserve, weight_on in test_cases:
             print "%i nodes, %i links, directed: %i, %i rewires, "\
                 "preserving %s, weights on: %i"\
                 % (n, m, directed, n_rewires, preserve, weight_on)
@@ -71,7 +87,51 @@ class FirstTestCase(unittest.TestCase):
     def test_rich_nodes(self):
         """Docstrings are printed during executions
         of the tests in the Eclipse IDE"""
-        self.assertEqual(1, 1)
+
+        ns = [60, ]
+        ms = [60, 10, 600]
+        directeds = [True, False]
+        highests = [True, False]
+        scoress = [None, 'r']
+
+        test_cases = [(n, m, directed, highest, score)
+                      for n in ns
+                      for m in ms
+                      for directed in directeds
+                      for highest in highests
+                      for score in scoress]
+
+        for n, m, directed, highest, score in test_cases:
+            g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
+
+            #Returns all nodes
+            self.assertEqual(
+                len(richclub.rich_nodes(g, fraction=1, highest=highest)),
+                len(g.vs))
+
+            if score == 'r':
+                from numpy.random import rand
+                from numpy import delete, greater, less
+                score = rand(n)
+
+                if highest:
+                    op = greater
+                else:
+                    op = less
+
+                for i in range(n):
+                    fraction = float(i) / n
+                    rnodes = richclub.rich_nodes(g, fraction=fraction,
+                                                 highest=highest)
+                    rscores = score(rnodes)
+                    poorscores = delete(score, rnodes)
+
+                    self.assertEqual(len(rnodes), i)
+                    self.assertTrue(
+                        all(
+                            [op(a, b) for a in rscores for b in poorscores]
+                        )
+                    )
 
     def test_rich_club_coefficient(self):
         """Docstrings are printed during executions

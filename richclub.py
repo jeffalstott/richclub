@@ -65,7 +65,7 @@ def rich_nodes(graph, fraction=0.1, highest=True, scores=None):
     @param fraction: the fraction of vertices to extract; must be between 0 and 1.
     @param highest:  whether to extract the subgraph spanned by the highest or
                      lowest scores.
-    @param scores:   the scores themsestrength_sprlves. C{None} uses the vertex degrees.
+    @param scores:   the scores themselves. C{None} uses the vertex degrees.
     """
 
     if scores is None:
@@ -84,7 +84,7 @@ def rich_nodes(graph, fraction=0.1, highest=True, scores=None):
 
 
 def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
-                          rewire=1000, average=1, control=None):
+                          rewire=10, average=1, control=None):
     if type(fraction) == float:
         fraction = [fraction]
 
