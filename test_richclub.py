@@ -131,6 +131,8 @@ class FirstTestCase(unittest.TestCase):
 
                     self.assertEqual(len(rnodes), i)
 
+                    print rscores
+                    print poorscores
                     self.assertTrue(
                         all(
                             [op(a, b) for a in rscores for b in poorscores]
