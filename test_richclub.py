@@ -103,6 +103,9 @@ class FirstTestCase(unittest.TestCase):
 
         for n, m, directed, highest, score in test_cases:
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
+            print "%i nodes, %i links, directed: %i, highest: %i, "\
+                "score: %s"\
+                % (n, m, directed, highest, score)
 
             #Returns all nodes
             self.assertEqual(
@@ -120,13 +123,14 @@ class FirstTestCase(unittest.TestCase):
                     op = less
 
                 for i in range(n):
-                    fraction = float(i) / n
+                    fraction = float(i + 1) / n
                     rnodes = richclub.rich_nodes(g, fraction=fraction,
                                                  highest=highest)
                     rscores = score[rnodes]
                     poorscores = delete(score, rnodes)
 
                     self.assertEqual(len(rnodes), i)
+
                     self.assertTrue(
                         all(
                             [op(a, b) for a in rscores for b in poorscores]
