@@ -9,7 +9,7 @@ def directed_spr(G, n_rewires=10, preserve='out'):
     while i < (n_rewires * nes):
         if rerolls > n_rewires * nes:
             print "Halted after %i failed rewirings and"\
-            "%i successful rewirings" % (rerolls, i)
+                "%i successful rewirings" % (rerolls, i)
             return g
 
         e1 = randint(nes)
@@ -84,7 +84,7 @@ def rich_nodes(graph, fraction=0.1, highest=True, scores=None):
 
 
 def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
-                          rewire=10, average=1, control=None):
+                          rewire=10, average=1, control=None, preserve=None):
     if type(fraction) == float:
         fraction = [fraction]
 
@@ -94,15 +94,30 @@ def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
 
     from numpy import zeros
 
-    if scores_name is None or scores_name == 'degree':
-        scores = graph.degree()
-        randomization = 'out'
+    if not graph.is_weighted():
+        from numpy import ones
+        #If given an unweighted graph, "strength"="degree", so all edges
+        #have equal weight
+        graph = graph.copy()
+        graph.es["weight"] = ones(len(graph.es))
+
+        #For unweighted graphs, preserving out strength vs in strength does
+        #the same thing, so we'll just assign something to use.
+        if not preserve:
+            preserve = 'out'
+
+    if scores_name is None or scores_name == 'strength':
+        scores = graph.strength(graph.vs, mode=3, weights=graph.es["weight"])
+        #Will not assign preserve here, because if the graph is actually weighted
+        #the correct normalization is domain specific. ie. Up to the user!
     elif scores_name == 'out_strength':
         scores = graph.strength(graph.vs, mode=1, weights=graph.es["weight"])
-        randomization = 'out'
+        if not preserve:
+            preserve = 'out'
     elif scores_name == 'in_strength':
         scores = graph.strength(graph.vs, mode=2, weights=graph.es["weight"])
-        randomization = 'in'
+        if not preserve:
+            preserve = 'in'
 
     rc_coefficient = zeros(len(fraction))
 
@@ -111,10 +126,10 @@ def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
         node_indices = rich_nodes(
             graph, fraction=fraction[i], highest=highest, scores=scores)
 
-        if scores_name is None or scores_name == 'degree':
-            numerator = len(graph.es.select(_within=node_indices))
+        if scores_name is None or scores_name == 'strength':
+            numerator = sum(graph.es.select(_within=node_indices)["weight"])
             denominator = sum(
-                graph.es.select(_target_in=node_indices)["weight"])
+                graph.es.select(_between=(node_indices, graph.vs))["weight"])
         elif scores_name == 'out_strength':
             numerator = sum(graph.es.select(_within=node_indices)["weight"])
             denominator = sum(
@@ -134,24 +149,30 @@ def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
 
         control_rc_coefficient = zeros(len(fraction))
         for i in range(len(control)):
+
             random_graph = Graph.Weighted_Adjacency(
                 control[i].toarray().tolist())
+
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
                     random_graph, fraction=fraction, highest=highest,
                     scores_name=scores_name, rewire=False)
+
         control_rc_coefficient = control_rc_coefficient / len(control)
 
         return rc_coefficient / control_rc_coefficient
     elif rewire:
         control_rc_coefficient = zeros(len(fraction))
         for i in range(average):
+
             random_graph = directed_spr(
-                graph, n_rewires=rewire, preserve=randomization)
+                graph, n_rewires=rewire, preserve=preserve)
+
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
                     random_graph, fraction=fraction, highest=highest,
                     scores_name=scores_name, rewire=False)
+
         control_rc_coefficient = control_rc_coefficient / average
 
         return rc_coefficient / control
