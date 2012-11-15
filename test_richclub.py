@@ -123,7 +123,7 @@ class FirstTestCase(unittest.TestCase):
                     fraction = float(i) / n
                     rnodes = richclub.rich_nodes(g, fraction=fraction,
                                                  highest=highest)
-                    rscores = score(rnodes)
+                    rscores = score[rnodes]
                     poorscores = delete(score, rnodes)
 
                     self.assertEqual(len(rnodes), i)
