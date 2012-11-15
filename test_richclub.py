@@ -122,8 +122,8 @@ class FirstTestCase(unittest.TestCase):
                 else:
                     op = less
 
-                for i in range(n):
-                    fraction = float(i + 1) / n
+                for i in range(1, n):
+                    fraction = float(i) / n
                     rnodes = richclub.rich_nodes(g, fraction=fraction,
                                                  highest=highest)
                     rscores = score[rnodes]
