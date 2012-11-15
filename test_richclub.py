@@ -10,8 +10,8 @@ class FirstTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Called once before all tests in this class."""
-        ns = [60, 6]
-        ms = [60, 10]
+        ns = [60, ]
+        ms = [60, 10, 600]
         directeds = [True, ]  # Not designed to work with undirected graphs
         n_rewiress = [2, 10]
         preserves = ['out', 'in']
