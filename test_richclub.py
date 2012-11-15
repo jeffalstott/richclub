@@ -10,10 +10,10 @@ class FirstTestCase(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         """Called once before all tests in this class."""
-        ns = [60, ]
-        ms = [60, ]
+        ns = [60, 6]
+        ms = [60, 10]
         directeds = [True, ]  # Not designed to work with undirected graphs
-        n_rewiress = [2, ]
+        n_rewiress = [2, 10]
         preserves = ['out', 'in']
         weight_ons = [False, True]
 
@@ -62,8 +62,6 @@ class FirstTestCase(unittest.TestCase):
                     mode = 2
                 if not directed:
                     mode = 3
-                print sort(g.strength(mode=mode, weights=g.es["weight"]))
-                print sort(gr.strength(mode=mode, weights=gr.es["weight"]))
 
                 assert_allclose(
                     sort(g.strength(mode=mode, weights=g.es["weight"])),
