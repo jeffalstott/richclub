@@ -38,7 +38,7 @@ def directed_spr(G, n_rewires=10, preserve='out'):
         if t2 in g.neighbors(s1, mode=1) or t1 in g.neighbors(s2, mode=1):
             rerolls += 1
             continue
-        #NEED TO FIX BEHAVIOR FOR V LINKS REWIRING (As in, they're presently not!)
+
         g.delete_edges([e1, e2])
         if preserve == 'out':  # Rewire the outgoing connections
             g.add_edge(s1, t2, **a1)
@@ -98,10 +98,10 @@ def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
         scores = graph.degree()
         randomization = 'out'
     elif scores_name == 'out_strength':
-        scores = graph.strength(graph.vs, mode=2, weights=graph.es["weight"])
+        scores = graph.strength(graph.vs, mode=1, weights=graph.es["weight"])
         randomization = 'out'
     elif scores_name == 'in_strength':
-        scores = graph.strength(graph.vs, mode=1, weights=graph.es["weight"])
+        scores = graph.strength(graph.vs, mode=2, weights=graph.es["weight"])
         randomization = 'in'
 
     rc_coefficient = zeros(len(fraction))

@@ -8,27 +8,10 @@ from numpy import all
 
 class FirstTestCase(unittest.TestCase):
 
-    @classmethod
-    def setUpClass(cls):
-        """Called once before all tests in this class."""
-        ns = [60, ]
-        ms = [60, 10, 600]
-        directeds = [True, ]  # Not designed to work with undirected graphs
-        n_rewiress = [2, 10]
-        preserves = ['out', 'in']
-        weight_ons = [False, True]
-
-        cls.test_cases = [(n, m, directed, n_rewires, preserve, weight_on)
-                          for n in ns
-                          for m in ms
-                          for directed in directeds
-                          for n_rewires in n_rewiress
-                          for preserve in preserves
-                          for weight_on in weight_ons]
-    pass
-
     def test_directed_spr(self):
-        """All methods beginning with 'test' are executed"""
+        """Testing random control generation for directed weighted and
+        unweighted graphs. Note that this code presently is not intended
+        to function for undirected graphs, and in fact it does not."""
 
         ns = [60, ]
         ms = [60, 10, 600]
@@ -85,8 +68,8 @@ class FirstTestCase(unittest.TestCase):
                     err_msg="Strength sequence not equal")
 
     def test_rich_nodes(self):
-        """Docstrings are printed during executions
-        of the tests in the Eclipse IDE"""
+        """Testing rich/poor node selection on directed and undirected
+        graphs."""
 
         ns = [60, ]
         ms = [60, 10, 600]
@@ -130,9 +113,6 @@ class FirstTestCase(unittest.TestCase):
                     poorscores = delete(score, rnodes)
 
                     self.assertEqual(len(rnodes), i)
-
-                    print rscores
-                    print poorscores
                     self.assertTrue(
                         all(
                             [op(a, b) for a in rscores for b in poorscores]
