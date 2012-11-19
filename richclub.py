@@ -62,7 +62,7 @@ def rich_nodes(graph, rank=90.0, mode='percentile', highest=True, scores=None):
     Scores are given by the vertex degrees by default.
 
     @param graph:    the graph to work on
-    @param fraction: the fraction of vertices to extract; must be between 0 and 1.
+    @param rank: the rank of vertices to extract; must be between 0 and 1.
     @param highest:  whether to extract the subgraph spanned by the highest or
                      lowest scores.
     @param scores:   the scores themselves. C{None} uses the vertex degrees.
@@ -87,14 +87,14 @@ def rich_nodes(graph, rank=90.0, mode='percentile', highest=True, scores=None):
 
     return targets
 
-def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
+def rich_club_coefficient(graph, rank=None, highest=True, scores_name=None,
                           rewire=10, average=1, control=None, preserve=None):
-    if type(fraction) == float:
-        fraction = [fraction]
+    if type(rank) == float:
+        rank = [rank]
 
-    if fraction is None:
+    if rank is None:
         from numpy import arange
-        fraction = arange(.9, 0, -.1)
+        rank = arange(10.0, 90.0, 10.0)
 
     from numpy import zeros
 
@@ -123,12 +123,12 @@ def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
         if not preserve:
             preserve = 'in'
 
-    rc_coefficient = zeros(len(fraction))
+    rc_coefficient = zeros(len(rank))
 
-    for i in range(len(fraction)):
+    for i in range(len(rank)):
 
         node_indices = rich_nodes(
-            graph, fraction=fraction[i], highest=highest, scores=scores)
+            graph, rank=rank[i], highest=highest, scores=scores)
 
         if scores_name is None or scores_name == 'strength':
             numerator = sum(graph.es.select(_within=node_indices)["weight"])
@@ -151,7 +151,7 @@ def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
         if ~(type(control) == list or type(control) == ndarray):
             control = list(control)
 
-        control_rc_coefficient = zeros(len(fraction))
+        control_rc_coefficient = zeros(len(rank))
         for i in range(len(control)):
 
             random_graph = Graph.Weighted_Adjacency(
@@ -159,14 +159,14 @@ def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
 
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
-                    random_graph, fraction=fraction, highest=highest,
+                    random_graph, rank=rank, highest=highest,
                     scores_name=scores_name, rewire=False)
 
         control_rc_coefficient = control_rc_coefficient / len(control)
 
         return rc_coefficient / control_rc_coefficient
     elif rewire:
-        control_rc_coefficient = zeros(len(fraction))
+        control_rc_coefficient = zeros(len(rank))
         for i in range(average):
 
             random_graph = directed_spr(
@@ -174,7 +174,7 @@ def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
 
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
-                    random_graph, fraction=fraction, highest=highest,
+                    random_graph, rank=rank, highest=highest,
                     scores_name=scores_name, rewire=False)
 
         control_rc_coefficient = control_rc_coefficient / average
