@@ -55,7 +55,7 @@ def directed_spr(G, n_rewires=10, preserve='out'):
     return g
 
 
-def rich_nodes(graph, fraction=0.1, highest=True, scores=None):
+def rich_nodes(graph, rank=90.0, mode='percentile', highest=True, scores=None):
     """Extracts the "rich club" of the given graph, i.e. the subgraph spanned
     between vertices having the top X% of some score.
 
@@ -71,17 +71,21 @@ def rich_nodes(graph, fraction=0.1, highest=True, scores=None):
     if scores is None:
         scores = graph.degree()
 
-    indices = range(graph.vcount())
-    indices.sort(key=scores.__getitem__)
+    if not highest:
+        rank = 100-rank
 
-    n = int(round(graph.vcount() * fraction))
+
+    from numpy import where
+    if mode=='percentile':
+        from scipy.stats import scoreatpercentile
+        threshold_score = scoreatpercentile(scores, rank)
+
     if highest:
-        indices = indices[-n:]
+        targets = where(scores>=threshold_score)[0]
     else:
-        indices = indices[:n]
+        targets = where(scores<=threshold_score)[0]
 
-    return indices
-
+    return targets
 
 def rich_club_coefficient(graph, fraction=None, highest=True, scores_name=None,
                           rewire=10, average=1, control=None, preserve=None):

@@ -92,7 +92,7 @@ class FirstTestCase(unittest.TestCase):
 
             #Returns all nodes
             self.assertEqual(
-                len(richclub.rich_nodes(g, fraction=1, highest=highest)),
+                len(richclub.rich_nodes(g, rank=0, highest=highest)),
                 len(g.vs))
 
             if score == 'r':
@@ -105,14 +105,14 @@ class FirstTestCase(unittest.TestCase):
                 else:
                     op = less
 
-                for i in range(1, n):
-                    fraction = float(i) / n
-                    rnodes = richclub.rich_nodes(g, fraction=fraction,
+                for i in range(0, n-1):
+                    percentile = 100.0*i / n
+                    rnodes = richclub.rich_nodes(g, rank=percentile,
                                                  highest=highest, scores=score)
                     rscores = score[rnodes]
                     poorscores = delete(score, rnodes)
 
-                    self.assertEqual(len(rnodes), i)
+                    self.assertEqual(len(rnodes), n-i)
                     self.assertTrue(
                         all(
                             [op(a, b) for a in rscores for b in poorscores]
