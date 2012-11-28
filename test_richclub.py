@@ -105,14 +105,14 @@ class FirstTestCase(unittest.TestCase):
                 else:
                     op = less
 
-                for i in range(0, n-1):
-                    percentile = 100.0*i / n
+                for i in range(0, n - 1):
+                    percentile = 100.0 * i / n
                     rnodes = richclub.rich_nodes(g, rank=percentile,
                                                  highest=highest, scores=score)
                     rscores = score[rnodes]
                     poorscores = delete(score, rnodes)
 
-                    self.assertEqual(len(rnodes), n-i)
+                    self.assertEqual(len(rnodes), n - i)
                     self.assertTrue(
                         all(
                             [op(a, b) for a in rscores for b in poorscores]

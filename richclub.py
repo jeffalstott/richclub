@@ -55,7 +55,18 @@ def directed_spr(G, n_rewires=10, preserve='out'):
     return g
 
 
-def rich_nodes(graph, rank=90.0, mode='percentile', highest=True, scores=None):
+def threshold_score(scores, rank=90.0, mode='percentile', highest=True):
+    if not highest:
+        rank = 100 - rank
+
+    if mode == 'percentile':
+        from scipy.stats import scoreatpercentile
+        threshold_score = scoreatpercentile(scores, rank)
+
+    return threshold_score
+
+
+def rich_nodes(graph, scores=None, highest=True, **kwargs):
     """Extracts the "rich club" of the given graph, i.e. the subgraph spanned
     between vertices having the top X% of some score.
 
@@ -71,32 +82,25 @@ def rich_nodes(graph, rank=90.0, mode='percentile', highest=True, scores=None):
     if scores is None:
         scores = graph.degree()
 
-    if not highest:
-        rank = 100-rank
-
+    ts = threshold_score(scores, highest=highest, **kwargs)
 
     from numpy import where
-    if mode=='percentile':
-        from scipy.stats import scoreatpercentile
-        threshold_score = scoreatpercentile(scores, rank)
-
     if highest:
-        targets = where(scores>=threshold_score)[0]
+        targets = where(scores >= ts)[0]
     else:
-        targets = where(scores<=threshold_score)[0]
+        targets = where(scores <= ts)[0]
 
     return targets
 
-def rich_club_coefficient(graph, rank=None, highest=True, scores_name=None,
-                          rewire=10, average=1, control=None, preserve=None):
+
+def rich_club_coefficient(graph, richness=None, club_property=None,
+                          rank=None, weightmax=1, **kwargs):
     if type(rank) == float:
         rank = [rank]
 
     if rank is None:
         from numpy import arange
         rank = arange(10.0, 90.0, 10.0)
-
-    from numpy import zeros
 
     if not graph.is_weighted():
         from numpy import ones
@@ -105,45 +109,108 @@ def rich_club_coefficient(graph, rank=None, highest=True, scores_name=None,
         graph = graph.copy()
         graph.es["weight"] = ones(len(graph.es))
 
-        #For unweighted graphs, preserving out strength vs in strength does
-        #the same thing, so we'll just assign something to use.
-        if not preserve:
-            preserve = 'out'
-
-    if scores_name is None or scores_name == 'strength':
+    if richness is None or richness == 'strength':
         scores = graph.strength(graph.vs, mode=3, weights=graph.es["weight"])
-        #Will not assign preserve here, because if the graph is actually weighted
-        #the correct normalization is domain specific. ie. Up to the user!
-    elif scores_name == 'out_strength':
+    elif richness == 'out_strength':
         scores = graph.strength(graph.vs, mode=1, weights=graph.es["weight"])
-        if not preserve:
-            preserve = 'out'
-    elif scores_name == 'in_strength':
+    elif richness == 'in_strength':
         scores = graph.strength(graph.vs, mode=2, weights=graph.es["weight"])
-        if not preserve:
-            preserve = 'in'
+    else:
+        raise ValueError("Unrecognized richness metric.")
 
+    from numpy import zeros
     rc_coefficient = zeros(len(rank))
 
     for i in range(len(rank)):
 
-        node_indices = rich_nodes(
-            graph, rank=rank[i], highest=highest, scores=scores)
+        rich_node_indices = rich_nodes(
+            graph, rank=rank[i], scores=scores, **kwargs)
 
-        if scores_name is None or scores_name == 'strength':
-            numerator = sum(graph.es.select(_within=node_indices)["weight"])
-            denominator = sum(
-                graph.es.select(_between=(node_indices, graph.vs))["weight"])
-        elif scores_name == 'out_strength':
-            numerator = sum(graph.es.select(_within=node_indices)["weight"])
-            denominator = sum(
-                graph.es.select(_source_in=node_indices)["weight"])
-        elif scores_name == 'in_strength':
-            numerator = sum(graph.es.select(_within=node_indices)["weight"])
-            denominator = sum(
-                graph.es.select(_target_in=node_indices)["weight"])
+        rich_subgraph = graph.subgraph(rich_node_indices)
 
-        rc_coefficient[i] = numerator / denominator
+        if club_property.startswith('intensity'):
+            numerator = sum(rich_subgraph.es["weight"])
+
+            if 'local' in club_property:
+                target_nodes = rich_node_indices
+            elif 'global' in club_property:
+                target_nodes = graph.vs
+            else:
+                raise ValueError("Unrecognized club_property metric.")
+
+            if richness is None or richness == 'strength':
+                candidate_edges = graph.es.select(_between=(target_nodes, graph.vs))["weight"]
+            elif richness == 'out_strength':
+                candidate_edges = graph.es.select(_source_in=target_nodes)["weight"]
+            elif richness == 'in_strength':
+                candidate_edges = graph.es.select(_target_in=target_nodes)["weight"]
+            else:
+                raise ValueError("Unrecognized richness metric.")
+
+            if 'total' in club_property:
+                denominator = sum(candidate_edges)
+            elif 'topN_' in club_property:
+                from numpy import sort
+                candidate_edges = sort(candidate_edges)[::-1]
+                N = len(rich_subgraph.es)
+                denominator = sum(candidate_edges[:N])
+            elif 'topNp_' in club_property:
+                from numpy import sort
+                candidate_edges = sort(candidate_edges)[::-1]
+                n = len(rich_subgraph.vs)
+                Np = n * (n - 1)
+                denominator = sum(candidate_edges[:Np])
+            elif 'topNpweightmax' in club_property:
+                n = len(rich_subgraph.vs)
+                Np = n * (n - 1)
+                denominator = Np * weightmax
+            else:
+                raise ValueError("Unrecognized club_property metric.")
+
+            rc_coefficient[i] = numerator / denominator
+
+        elif club_property == 'clustering':
+            rc_coefficient[i] = rich_subgraph.transitivity_avglocal_undirected(weights='weight')
+        elif club_property == 'n_infomap':
+            infomap = rich_subgraph.community_infomap(edge_weights=rich_subgraph.es["weight"])
+            rc_coefficient[i] = infomap.cluster_graph().vcount()
+        elif club_property == 'q_infomap':
+            infomap = rich_subgraph.community_infomap(edge_weights=rich_subgraph.es["weight"])
+            rc_coefficient[i] = infomap.q
+        elif club_property == 'codelength':
+            infomap = rich_subgraph.community_infomap(edge_weights=rich_subgraph.es["weight"])
+            rc_coefficient[i] = infomap.codelength
+        else:
+            raise ValueError("Unrecognized club_property option.")
+
+
+def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
+                                     preserve=None, rank=None, **kwargs):
+
+    if type(rank) == float:
+        rank = [rank]
+
+    if rank is None:
+        from numpy import arange
+        rank = arange(10.0, 90.0, 10.0)
+    rc_coefficient = rich_club_coefficient(graph, **kwargs)
+
+    from numpy import zeros
+
+    if not preserve:
+        if not graph.is_weighted():
+            #For unweighted graphs, preserving out strength vs in strength does
+            #the same thing, so we'll just assign something to use.
+            preserve = 'out'
+        elif kwargs['richness'] == 'out_strength':
+            preserve = 'out'
+        elif kwargs['richness'] == 'in_strength':
+            preserve = 'in'
+        elif kwargs['richness'] is None or kwargs['richness'] == 'strength':
+            #Will not assign preserve here, because if the graph is actually weighted
+            #the correct normalization is domain specific. ie. Up to the user!
+            raise ValueError("Must provide explicit control graphs"
+                             "for this richness option.")
 
     if control is not None:
         from igraph import Graph
@@ -159,8 +226,7 @@ def rich_club_coefficient(graph, rank=None, highest=True, scores_name=None,
 
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
-                    random_graph, rank=rank, highest=highest,
-                    scores_name=scores_name, rewire=False)
+                    random_graph, rank=rank, **kwargs)
 
         control_rc_coefficient = control_rc_coefficient / len(control)
 
@@ -174,11 +240,11 @@ def rich_club_coefficient(graph, rank=None, highest=True, scores_name=None,
 
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
-                    random_graph, rank=rank, highest=highest,
-                    scores_name=scores_name, rewire=False)
+                    random_graph, rank=rank, **kwargs)
 
         control_rc_coefficient = control_rc_coefficient / average
 
         return rc_coefficient / control
     else:
-        return rc_coefficient
+        raise ValueError("Must provide explicit control graphs if"
+                         "rewiring option is deactivated.")
