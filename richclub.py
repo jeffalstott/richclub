@@ -116,6 +116,8 @@ def rich_club_coefficient(graph, richness=None, club_property=None,
         scores = graph.strength(graph.vs, mode=1, weights=graph.es["weight"])
     elif richness == 'in_strength':
         scores = graph.strength(graph.vs, mode=2, weights=graph.es["weight"])
+    elif type(richness)==FunctionType:
+        scores = richness(graph)
     else:
         raise ValueError("Unrecognized richness metric.")
 
