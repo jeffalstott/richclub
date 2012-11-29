@@ -95,7 +95,8 @@ def rich_nodes(graph, scores=None, highest=True, **kwargs):
 
 def rich_club_coefficient(graph, richness=None, club_property=None,
                           rank=None, weightmax=1, **kwargs):
-    if type(rank) == float:
+    from types import FunctionType, FloatType
+    if type(rank) == FloatType:
         rank = [rank]
 
     if rank is None:
@@ -180,6 +181,8 @@ def rich_club_coefficient(graph, richness=None, club_property=None,
         elif club_property == 'codelength':
             infomap = rich_subgraph.community_infomap(edge_weights=rich_subgraph.es["weight"])
             rc_coefficient[i] = infomap.codelength
+        elif type(club_property)==FunctionType:
+            rc_coefficient[i] = club_property(graph, rich_node_indices)
         else:
             raise ValueError("Unrecognized club_property option.")
 
