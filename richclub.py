@@ -92,6 +92,21 @@ def rich_nodes(graph, scores=None, highest=True, **kwargs):
 
     return targets
 
+def richness_scores(graph, richness=None):
+    from types import FunctionType
+
+    if richness is None or richness == 'strength':
+        scores = graph.strength(graph.vs, mode=3, weights=graph.es["weight"])
+    elif richness == 'out_strength':
+        scores = graph.strength(graph.vs, mode=1, weights=graph.es["weight"])
+    elif richness == 'in_strength':
+        scores = graph.strength(graph.vs, mode=2, weights=graph.es["weight"])
+    elif type(richness)==FunctionType:
+        scores = richness(graph)
+    else:
+        raise ValueError("Unrecognized richness metric.")
+
+    return scores
 
 def rich_club_coefficient(graph, richness=None, club_property=None,
                           rank=None, weightmax=1, **kwargs):
@@ -110,16 +125,7 @@ def rich_club_coefficient(graph, richness=None, club_property=None,
         graph = graph.copy()
         graph.es["weight"] = ones(len(graph.es))
 
-    if richness is None or richness == 'strength':
-        scores = graph.strength(graph.vs, mode=3, weights=graph.es["weight"])
-    elif richness == 'out_strength':
-        scores = graph.strength(graph.vs, mode=1, weights=graph.es["weight"])
-    elif richness == 'in_strength':
-        scores = graph.strength(graph.vs, mode=2, weights=graph.es["weight"])
-    elif type(richness)==FunctionType:
-        scores = richness(graph)
-    else:
-        raise ValueError("Unrecognized richness metric.")
+    scores = richness_scores(graph, richness=richness)
 
     from numpy import zeros
     rc_coefficient = zeros(len(rank))
