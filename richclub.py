@@ -194,6 +194,8 @@ def rich_club_coefficient(graph, richness=None, club_property=None,
         else:
             raise ValueError("Unrecognized club_property option.")
 
+    return rc_coefficient
+
 
 def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
                                      preserve=None, rank=None, **kwargs):
