@@ -4,6 +4,18 @@ def directed_spr(G, n_rewires=10, preserve='out'):
     g = G.copy()
     nes = len(g.es)
 
+    if not g.is_directed():
+        if 'weight' not in g.es.attributes():
+            #Just use igraph's built in rewiring.
+            g.rewire(n=n_rewires*nes)
+            return g
+        else:
+            raise ValueError("directed_spr currently does not support rewiring "
+            "of graphs that are both undirected and weighted. Have a good think "
+            "on the best ways to preserve the degree and strength sequence of an"
+            "undirected graph and get back to us with what you come up with.")
+            ValueError
+
     i = 0
     rerolls = 0
     while i < (n_rewires * nes):
@@ -108,15 +120,18 @@ def richness_scores(graph, richness=None):
 
     return scores
 
-def rich_club_coefficient(graph, richness=None, club_property=None,
-                          rank=None, weightmax=1, **kwargs):
+def rich_club_coefficient(graph, richness=None,
+        club_property='intensity_topNp_local',
+        rank=None, weightmax=1.0, candidate_edges_function=None,
+        **kwargs):
+
     from types import FunctionType, FloatType
     if type(rank) == FloatType:
         rank = [rank]
 
     if rank is None:
         from numpy import arange
-        rank = arange(10.0, 90.0, 10.0)
+        rank = arange(10.0, 100.0, 10.0)
 
     if not graph.is_weighted():
         from numpy import ones
@@ -147,14 +162,18 @@ def rich_club_coefficient(graph, richness=None, club_property=None,
             else:
                 raise ValueError("Unrecognized club_property metric.")
 
-            if richness is None or richness == 'strength':
+            if richness is None or richness == 'strength' or candidate_edges_function=='strength':
                 candidate_edges = graph.es.select(_between=(target_nodes, graph.vs))["weight"]
-            elif richness == 'out_strength':
+            elif richness == 'out_strength' or candidate_edges_function=='out_strength':
                 candidate_edges = graph.es.select(_source_in=target_nodes)["weight"]
-            elif richness == 'in_strength':
+            elif richness == 'in_strength' or candidate_edges_function=='in_strength':
                 candidate_edges = graph.es.select(_target_in=target_nodes)["weight"]
+            elif candidate_edges_function:
+                candidate_edges = candidate_edges_function(graph)
             else:
-                raise ValueError("Unrecognized richness metric.")
+                raise ValueError("Unrecognized richness metric for identifying "
+                "candidate edges to be used in calculating the denominator of "
+                "intensity properties. Supply a candidate_edges_function.")
 
             if 'total' in club_property:
                 denominator = sum(candidate_edges)
@@ -167,11 +186,15 @@ def rich_club_coefficient(graph, richness=None, club_property=None,
                 from numpy import sort
                 candidate_edges = sort(candidate_edges)[::-1]
                 n = len(rich_subgraph.vs)
-                Np = n * (n - 1)
+                Np = n * (n - 1.0)
+                if not graph.is_directed():
+                    Np = Np/2.0
                 denominator = sum(candidate_edges[:Np])
             elif 'topNpweightmax' in club_property:
                 n = len(rich_subgraph.vs)
-                Np = n * (n - 1)
+                Np = n * (n - 1.0)
+                if not graph.is_directed():
+                    Np = Np/2.0
                 denominator = Np * weightmax
             else:
                 raise ValueError("Unrecognized club_property metric.")
@@ -206,6 +229,7 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
     if rank is None:
         from numpy import arange
         rank = arange(10.0, 90.0, 10.0)
+
     rc_coefficient = rich_club_coefficient(graph, **kwargs)
 
     from numpy import zeros
@@ -222,8 +246,8 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
         elif kwargs['richness'] is None or kwargs['richness'] == 'strength':
             #Will not assign preserve here, because if the graph is actually weighted
             #the correct normalization is domain specific. ie. Up to the user!
-            raise ValueError("Must provide explicit control graphs"
-                             "for this richness option.")
+            raise ValueError("Must provide explicit control graphs or rewiring"
+                             "preservation for this richness option.")
 
     if control is not None:
         from igraph import Graph

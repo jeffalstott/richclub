@@ -3,13 +3,14 @@ import unittest
 from igraph import Graph
 import richclub
 from numpy.testing import assert_array_equal, assert_allclose
-from numpy import all
+from numpy import all, asarray
+from numpy.random import rand
 
 
 class FirstTestCase(unittest.TestCase):
 
     def test_directed_spr(self):
-        """Testing random control generation for directed weighted and
+        print """Testing random control generation for directed weighted and
         unweighted graphs. Note that this code presently is not intended
         to function for undirected graphs, and in fact it does not."""
 
@@ -67,8 +68,47 @@ class FirstTestCase(unittest.TestCase):
                     sort(gr.strength(mode=mode, weights=gr.es["weight"])),
                     err_msg="Strength sequence not equal")
 
+    def test_richness_scores(self):
+        print """Testing richness score identification on directed and undirected
+        graphs."""
+
+        ns = [60, ]
+        ms = [60, 10, 600]
+        directeds = [True, False]
+
+        test_cases = [(n, m, directed)
+                      for n in ns
+                      for m in ms
+                      for directed in directeds]
+
+        for n, m, directed in test_cases:
+            g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
+            print "%i nodes, %i links, directed: %i" % (n, m, directed)
+
+            g.es["weight"] = rand(m)
+            ins = richclub.richness_scores(g, richness='in_strength')
+            outs = richclub.richness_scores(g, richness='out_strength')
+            s = richclub.richness_scores(g, richness='strength')
+
+            if directed:
+                assert_allclose(
+                    asarray(ins)+asarray(outs),
+                    asarray(s),
+                    err_msg="Identified strength sequence not the sum of the "
+                    "out and in strength sequences")
+            else:
+                assert_allclose(
+                    asarray(ins),
+                    asarray(s),
+                    err_msg="In and total strength sequences not equal")
+
+                assert_allclose(
+                    asarray(outs),
+                    asarray(s),
+                    err_msg="Out and total strength sequences not equal")
+
     def test_rich_nodes(self):
-        """Testing rich/poor node selection on directed and undirected
+        print """Testing rich/poor node selection on directed and undirected
         graphs."""
 
         ns = [60, ]
@@ -120,9 +160,34 @@ class FirstTestCase(unittest.TestCase):
                     )
 
     def test_rich_club_coefficient(self):
-        """Docstrings are printed during executions
-        of the tests in the Eclipse IDE"""
+        print """Testing rich_club_coefficient"""
+
         self.assertTrue(True)
+        ns = [60, ]
+        ms = [60, 10, 600]
+        directeds = [True, False]
+        highests = [True, False]
+        scoress = [None, 'r']
+
+        test_cases = [(n, m, directed, highest, score)
+                      for n in ns
+                      for m in ms
+                      for directed in directeds
+                      for highest in highests
+                      for score in scoress]
+
+        rc_properties = [
+            'intensity_topNp_local',]
+
+        for n, m, directed, highest, score in test_cases:
+            g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
+#            print "%i nodes, %i links, directed: %i, highest: %i, "\
+#                "score: %s"\
+
+            for p in rc_properties:
+                print p
+                rc = richclub.rich_club_coefficient(g, club_property=p)
+            self.assertTrue(True)
 
 if __name__ == '__main__':
     # execute all TestCases in the module
