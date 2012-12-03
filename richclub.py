@@ -155,6 +155,10 @@ def rich_club_coefficient(graph, richness=None,
         if club_property.startswith('intensity'):
             numerator = sum(rich_subgraph.es["weight"])
 
+            if numerator==0:
+                rc_coefficient[i] = 0
+                continue
+
             if 'local' in club_property:
                 target_nodes = rich_node_indices
             elif 'global' in club_property:
