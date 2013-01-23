@@ -205,21 +205,12 @@ def rich_club_coefficient(graph, richness=None,
             elif 'local' in club_property:
             #The local option includes a requirement that each rich node cannot
             #contribute more links into the club than it can maximally hold.
-            #For an undirected network, this is just the number of other nodes.
-            #For a directed network, it's more tricky.
+            #For directed networks, we must identify if the node is contributing
+            #out links or in links to the club.
                 n_nodes = len(graph.vs)
                 n_rich = len(rich_node_indices)
-                rich_degree = zeros(n_nodes)
                 contribute_total = zeros(n_nodes)
                 denominator = 0
-
-                if directed_local_drawn_from=='out_links':
-                    mode = 1
-                elif directed_local_drawn_from=='in_links':
-                    mode = 2
-
-                for j in range(n_rich):
-                    rich_degree[j] = graph.vs[int(rich_node_indices[j])].degree(mode=mode)
 
                 from numpy import argsort
                 weights = candidate_edges["weight"]
@@ -234,7 +225,7 @@ def rich_club_coefficient(graph, richness=None,
                         home = e.target
 
                     j += 1
-                    if contribute_total[home] >= rich_degree[home]:
+                    if contribute_total[home] >= (n_rich-1):
                         continue
                     else:
                         denominator += e["weight"]
