@@ -121,7 +121,7 @@ def richness_scores(graph, richness=None):
     return scores
 
 def rich_club_coefficient(graph, richness=None,
-        club_property='intensity_topNp_local',
+        club_property='intensity_Pwm_global',
         rank=None, weightmax=1.0, candidate_edges_function=None,
         **kwargs):
 
@@ -180,33 +180,42 @@ def rich_club_coefficient(graph, richness=None,
                 "intensity properties. Supply a candidate_edges_function.")
 
             if 'total' in club_property:
-                denominator = sum(candidate_edges)
-            elif 'topN_' in club_property:
-                from numpy import sort
-                candidate_edges = sort(candidate_edges)[::-1]
-                N = len(rich_subgraph.es)
-                denominator = sum(candidate_edges[:N])
-            elif 'topNp_' in club_property:
-                from numpy import sort
-                candidate_edges = sort(candidate_edges)[::-1]
+                number_to_count = len(candidate_edges)
+            elif 'L' in club_property:
+                number_to_count = len(rich_subgraph.es)
+            elif 'P' in club_property:
                 n = len(rich_subgraph.vs)
-                Np = n * (n - 1.0)
+                number_to_count = n * (n - 1.0)
                 if not graph.is_directed():
-                    Np = Np/2.0
-                denominator = sum(candidate_edges[:Np])
-            elif 'topNpweightmax' in club_property:
-                n = len(rich_subgraph.vs)
-                Np = n * (n - 1.0)
-                if not graph.is_directed():
-                    Np = Np/2.0
-                denominator = Np * weightmax
+                    number_to_count = number_to_count / 2.0
             else:
                 raise ValueError("Unrecognized club_property metric.")
 
+            if 'wm' in club_property or 'weightmax' in club_property:
+                denominator = number_to_count * weightmax
+            else:
+                from numpy import sort
+                candidate_edges = sort(candidate_edges)[::-1]
+                denominator = sum(candidate_edges[:number_to_count])
+                if number_to_count > len(candidate_edges):
+                    print("Fewer links present in the network than are sought"
+                            " for with these settings. Try using the 'L'"
+                            " setting instead.")
+                    from numpy import nan
+                    denominator = nan
+
             rc_coefficient[i] = numerator / denominator
 
-        elif club_property == 'clustering':
+        elif club_property == 'n_components':
+            rc_coefficient[i] = len(rich_subgraph.components().subgraphs())
+        elif club_property == 'diameter_weighted':
+            rc_coefficient[i] = rich_subgraph.diameter(weights='weight')
+        elif club_property == 'diameter':
+            rc_coefficient[i] = rich_subgraph.diameter()
+        elif club_property == 'clustering_weighted':
             rc_coefficient[i] = rich_subgraph.transitivity_avglocal_undirected(weights='weight')
+        elif club_property == 'clustering':
+            rc_coefficient[i] = rich_subgraph.transitivity_avglocal_undirected()
         elif club_property == 'n_infomap':
             infomap = rich_subgraph.community_infomap(edge_weights=rich_subgraph.es["weight"])
             rc_coefficient[i] = infomap.cluster_graph().vcount()
