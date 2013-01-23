@@ -121,8 +121,9 @@ def richness_scores(graph, richness=None):
     return scores
 
 def rich_club_coefficient(graph, richness=None,
-        club_property='intensity_Pwm_global',
+        club_property='intensity_P_wm',
         rank=None, weightmax=1.0, candidate_edges_function=None,
+        directed_local_drawn_from='out_links',
         **kwargs):
 
     from types import FunctionType, FloatType
@@ -163,15 +164,17 @@ def rich_club_coefficient(graph, richness=None,
                 target_nodes = rich_node_indices
             elif 'global' in club_property:
                 target_nodes = graph.vs
+            elif 'wm' in club_property:
+                target_nodes = rich_node_indices
             else:
                 raise ValueError("Unrecognized club_property metric.")
 
             if richness is None or richness == 'strength' or candidate_edges_function=='strength':
-                candidate_edges = graph.es.select(_between=(target_nodes, graph.vs))["weight"]
+                candidate_edges = graph.es.select(_between=(target_nodes, graph.vs))
             elif richness == 'out_strength' or candidate_edges_function=='out_strength':
-                candidate_edges = graph.es.select(_source_in=target_nodes)["weight"]
+                candidate_edges = graph.es.select(_source_in=target_nodes)
             elif richness == 'in_strength' or candidate_edges_function=='in_strength':
-                candidate_edges = graph.es.select(_target_in=target_nodes)["weight"]
+                candidate_edges = graph.es.select(_target_in=target_nodes)
             elif candidate_edges_function:
                 candidate_edges = candidate_edges_function(graph)
             else:
@@ -191,18 +194,56 @@ def rich_club_coefficient(graph, richness=None,
             else:
                 raise ValueError("Unrecognized club_property metric.")
 
-            if 'wm' in club_property or 'weightmax' in club_property:
+            if number_to_count > len(candidate_edges):
+                print("Fewer links present in the network than are sought"
+                        " for with these settings. Try using the 'L'"
+                        " setting instead.")
+                from numpy import nan
+                denominator = nan
+            elif 'wm' in club_property or 'weightmax' in club_property:
                 denominator = number_to_count * weightmax
+            elif 'local' in club_property:
+            #The local option includes a requirement that each rich node cannot
+            #contribute more links into the club than it can maximally hold.
+            #For an undirected network, this is just the number of other nodes.
+            #For a directed network, it's more tricky.
+                n_nodes = len(graph.vs)
+                n_rich = len(rich_node_indices)
+                rich_degree = zeros(n_nodes)
+                contribute_total = zeros(n_nodes)
+                denominator = 0
+
+                if directed_local_drawn_from=='out_links':
+                    mode = 1
+                elif directed_local_drawn_from=='in_links':
+                    mode = 2
+
+                for j in range(n_rich):
+                    rich_degree[j] = graph.vs[int(rich_node_indices[j])].degree(mode=mode)
+
+                from numpy import argsort
+                weights = candidate_edges["weight"]
+                link_order = argsort(weights)
+                j = 0
+                while j < number_to_count:
+                    largest_link = int(link_order[j])
+                    e = candidate_edges[largest_link]
+                    if directed_local_drawn_from=='out_links':
+                        home = e.source
+                    elif directed_local_drawn_from=='in_links':
+                        home = e.target
+
+                    j += 1
+                    if contribute_total[home] >= rich_degree[home]:
+                        continue
+                    else:
+                        denominator += e["weight"]
+                        contribute_total[home] += 1
+                        number_to_count -= 1
             else:
                 from numpy import sort
-                candidate_edges = sort(candidate_edges)[::-1]
+                candidate_edges = sort(candidate_edges["weight"])[::-1]
                 denominator = sum(candidate_edges[:number_to_count])
-                if number_to_count > len(candidate_edges):
-                    print("Fewer links present in the network than are sought"
-                            " for with these settings. Try using the 'L'"
-                            " setting instead.")
-                    from numpy import nan
-                    denominator = nan
 
             rc_coefficient[i] = numerator / denominator
 
