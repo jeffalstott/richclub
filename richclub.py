@@ -194,14 +194,14 @@ def rich_club_coefficient(graph, richness=None,
             else:
                 raise ValueError("Unrecognized club_property metric.")
 
-            if number_to_count > len(candidate_edges):
+            if 'wm' in club_property or 'weightmax' in club_property:
+                denominator = number_to_count * weightmax
+            elif number_to_count > len(candidate_edges):
                 print("Fewer links present in the network than are sought"
                         " for with these settings. Try using the 'L'"
                         " setting instead.")
                 from numpy import nan
                 denominator = nan
-            elif 'wm' in club_property or 'weightmax' in club_property:
-                denominator = number_to_count * weightmax
             elif 'local' in club_property:
             #The local option includes a requirement that each rich node cannot
             #contribute more links into the club than it can maximally hold.
