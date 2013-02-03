@@ -19,20 +19,22 @@ class FirstTestCase(unittest.TestCase):
         directeds = [True, ]  # Not designed to work with undirected graphs
         n_rewiress = [2, 10]
         preserves = ['out', 'in']
+        node_weight_averaging = [False, True]
         weight_ons = [False, True]
 
-        test_cases = [(n, m, directed, n_rewires, preserve, weight_on)
+        test_cases = [(n, m, directed, n_rewires, preserve, nwa, weight_on)
                       for n in ns
                       for m in ms
                       for directed in directeds
                       for n_rewires in n_rewiress
                       for preserve in preserves
+                      for nwa in node_weight_averaging
                       for weight_on in weight_ons]
 
-        for n, m, directed, n_rewires, preserve, weight_on in test_cases:
+        for n, m, directed, n_rewires, preserve, nwa, weight_on in test_cases:
             print "%i nodes, %i links, directed: %i, %i rewires, "\
-                "preserving %s, weights on: %i"\
-                % (n, m, directed, n_rewires, preserve, weight_on)
+                    "preserving %s, node weight averaging: %i, weights on: %i"\
+                % (n, m, directed, n_rewires, preserve, nwa, weight_on)
 
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)
 
@@ -41,7 +43,9 @@ class FirstTestCase(unittest.TestCase):
                 g.es["weight"] = rand(m)
 
             gr = richclub.directed_spr(g, n_rewires=n_rewires,
-                                       preserve=preserve)
+                                       preserve=preserve,
+                                       average_weight_by_node=nwa)
+
 
             self.assertEqual(g.is_weighted(), gr.is_weighted())
             self.assertEqual(len(g.vs), len(gr.vs))
@@ -177,7 +181,12 @@ class FirstTestCase(unittest.TestCase):
                       for score in scoress]
 
         rc_properties = [
-            'intensity_topNp_local',]
+            'intensity_P_wm',
+            'intensity_L_wm',
+            'intensity_P_local',
+            'intensity_L_local',
+            'intensity_L_global',
+            'intensity_P_global']
 
         for n, m, directed, highest, score in test_cases:
             g = Graph.Erdos_Renyi(n=n, m=m, directed=directed)

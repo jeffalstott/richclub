@@ -1,4 +1,4 @@
-def directed_spr(G, n_rewires=10, preserve='out'):
+def directed_spr(G, n_rewires=10, preserve='out', average_weight_by_node=False):
     from numpy.random import randint
 
     g = G.copy()
@@ -15,6 +15,15 @@ def directed_spr(G, n_rewires=10, preserve='out'):
             "on the best ways to preserve the degree and strength sequence of an"
             "undirected graph and get back to us with what you come up with.")
             ValueError
+
+    if g.is_weighted() and average_weight_by_node:
+        from numpy import mean
+        for v in g.vs():
+            if preserve=='out':
+                edges = g.es.select(_source_in=[v])
+            elif preserve=='in':
+                edges = g.es.select(_target_in=[v])
+            edges["weight"] = mean(edges["weight"])
 
     i = 0
     rerolls = 0
@@ -197,8 +206,9 @@ def rich_club_coefficient(graph, richness=None,
             if 'wm' in club_property or 'weightmax' in club_property:
                 denominator = number_to_count * weightmax
 #            elif number_to_count > len(candidate_edges):
-#                print("Fewer links present in the network than are sought"
-#                        " for with these settings. Try using the 'L'"
+                print("Fewer links present in the network than are sought"
+                        " for with these settings. Using all available.")
+#                        "Try using the 'L'"
 #                        " setting instead.")
 #                from numpy import nan
 #                denominator = nan
@@ -216,7 +226,8 @@ def rich_club_coefficient(graph, richness=None,
                 weights = candidate_edges["weight"]
                 link_order = argsort(weights)
                 j = 0
-                while j < number_to_count:
+                limit = min(number_to_count, len(link_order))
+                while j < limit:
                     largest_link = int(link_order[j])
                     e = candidate_edges[largest_link]
                     if directed_local_drawn_from=='out_links':
