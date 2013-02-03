@@ -196,12 +196,12 @@ def rich_club_coefficient(graph, richness=None,
 
             if 'wm' in club_property or 'weightmax' in club_property:
                 denominator = number_to_count * weightmax
-            elif number_to_count > len(candidate_edges):
-                print("Fewer links present in the network than are sought"
-                        " for with these settings. Try using the 'L'"
-                        " setting instead.")
-                from numpy import nan
-                denominator = nan
+#            elif number_to_count > len(candidate_edges):
+#                print("Fewer links present in the network than are sought"
+#                        " for with these settings. Try using the 'L'"
+#                        " setting instead.")
+#                from numpy import nan
+#                denominator = nan
             elif 'local' in club_property:
             #The local option includes a requirement that each rich node cannot
             #contribute more links into the club than it can maximally hold.
@@ -273,9 +273,9 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
 
     if rank is None:
         from numpy import arange
-        rank = arange(10.0, 90.0, 10.0)
+        rank = arange(10.0, 100.0, 10.0)
 
-    rc_coefficient = rich_club_coefficient(graph, **kwargs)
+    rc_coefficient = rich_club_coefficient(graph, rank=rank, **kwargs)
 
     from numpy import zeros
 
@@ -326,7 +326,7 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
 
         control_rc_coefficient = control_rc_coefficient / average
 
-        return rc_coefficient / control
+        return rc_coefficient / control_rc_coefficient
     else:
         raise ValueError("Must provide explicit control graphs if"
                          "rewiring option is deactivated.")
