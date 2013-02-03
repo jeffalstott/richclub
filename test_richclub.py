@@ -71,6 +71,14 @@ class FirstTestCase(unittest.TestCase):
                     sort(g.strength(mode=mode, weights=g.es["weight"])),
                     sort(gr.strength(mode=mode, weights=gr.es["weight"])),
                     err_msg="Strength sequence not equal")
+                if nwa:
+                    for v in g.vs:
+                        if preserve=='out':
+                            edges = g.es.select(_source_in=[v])["weight"]
+                        if preserve=='in':
+                            edges = g.es.select(_target_in=[v])["weight"]
+                        if edges:
+                            assert_allclose(edges, edges[0])
 
     def test_richness_scores(self):
         print """Testing richness score identification on directed and undirected
