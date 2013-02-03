@@ -20,9 +20,9 @@ def directed_spr(G, n_rewires=10, preserve='out', average_weight_by_node=False):
         from numpy import mean
         for v in g.vs():
             if preserve=='out':
-                edges = g.es.select(_source_in=[v])
+                edges = g.es.select(_source_in=[v.index])
             elif preserve=='in':
-                edges = g.es.select(_target_in=[v])
+                edges = g.es.select(_target_in=[v.index])
             edges["weight"] = mean(edges["weight"])
 
     i = 0

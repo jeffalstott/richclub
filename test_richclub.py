@@ -74,11 +74,11 @@ class FirstTestCase(unittest.TestCase):
                 if nwa:
                     for v in g.vs:
                         if preserve=='out':
-                            edges = g.es.select(_source_in=[v])["weight"]
+                            weights = gr.es.select(_source_in=[v.index])["weight"]
                         if preserve=='in':
-                            edges = g.es.select(_target_in=[v])["weight"]
-                        if edges:
-                            assert_allclose(edges, edges[0])
+                            weights = gr.es.select(_target_in=[v.index])["weight"]
+                        if weights:
+                            assert_allclose(weights, weights[0])
 
     def test_richness_scores(self):
         print """Testing richness score identification on directed and undirected
