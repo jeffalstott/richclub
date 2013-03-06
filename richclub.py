@@ -76,7 +76,8 @@ def directed_spr(G, n_rewires=10, preserve='out', average_weight_by_node=False):
     return g
 
 
-def threshold_score(scores, rank=90.0, mode='percentile', highest=True):
+def threshold_score(scores, rank=90.0, mode='percentile', highest=True,
+        **kwargs):
     if not highest:
         rank = 100 - rank
 
@@ -125,13 +126,15 @@ def richness_scores(graph, richness=None):
     elif type(richness)==FunctionType:
         scores = richness(graph)
     else:
-        raise ValueError("Unrecognized richness metric.")
-
+        try:
+            scores = len(richness)
+        except TypeError:
+            raise ValueError("Unrecognized richness metric.")
     return scores
 
 def rich_club_coefficient(graph, richness=None,
         club_property='intensity_P_wm',
-        rank=None, weightmax=1.0, candidate_edges_function=None,
+        rank=None, weightmax='max', candidate_edges_function=None,
         directed_local_drawn_from='out_links',
         **kwargs):
 
@@ -149,6 +152,9 @@ def rich_club_coefficient(graph, richness=None,
         #have equal weight
         graph = graph.copy()
         graph.es["weight"] = ones(len(graph.es))
+
+    if weightmax=='max':
+        weightmax = max(graph.es["weight"])
 
     scores = richness_scores(graph, richness=richness)
 
@@ -206,15 +212,16 @@ def rich_club_coefficient(graph, richness=None,
             if 'wm' in club_property or 'weightmax' in club_property:
                 denominator = number_to_count * weightmax
 #            elif number_to_count > len(candidate_edges):
-                print("Fewer links present in the network than are sought"
-                        " for with these settings. Using all available.")
+#                print("Fewer links present in the network than are sought"
+#                        " for with these settings. Using all available.")
 #                        "Try using the 'L'"
 #                        " setting instead.")
 #                from numpy import nan
 #                denominator = nan
             elif 'local' in club_property:
             #The local option includes a requirement that each rich node cannot
-            #contribute more links into the club than it can maximally hold.
+            #contribute more links into the club than it can attach to all the
+            #other rich nodes.
             #For directed networks, we must identify if the node is contributing
             #out links or in links to the club.
                 n_nodes = len(graph.vs)
