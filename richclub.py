@@ -13,7 +13,7 @@ def directed_spr(G, n_rewires=10, preserve='out', average_weight_by_node=False):
             raise ValueError("directed_spr currently does not support rewiring "
             "of graphs that are both undirected and weighted. Have a good think "
             "on the best ways to preserve the degree and strength sequence of an"
-            "undirected graph and get back to us with what you come up with.")
+            " undirected graph and get back to us with what you come up with.")
             ValueError
 
     if g.is_weighted() and average_weight_by_node:
@@ -80,10 +80,11 @@ def plot_rich_club(phis, ranks, ax=None, alpha=.1, **kwargs):
     from numpy import shape
     if len(shape(phis))>1:
         multiple_samples = True
-        y = phis.mean(axis=1)
+        y = phis.mean(axis=0)
         from numpy import std
-        error = std(phis, axis=1)
+        error = std(phis, axis=0)
     else:
+        multiple_samples = False
         y = phis
         error = 0
 
@@ -152,7 +153,8 @@ def richness_scores(graph, richness=None):
         scores = richness(graph)
     else:
         try:
-            scores = len(richness)
+            len(richness)
+            scores = richness
         except TypeError:
             raise ValueError("Unrecognized richness metric.")
     return scores
@@ -193,7 +195,9 @@ def rich_club_coefficient(graph, richness=None,
 
         rich_subgraph = graph.subgraph(rich_node_indices)
 
-        if club_property.startswith('intensity'):
+        if club_property==None or club_property=='C':
+            rc_coefficient[i] = sum(rich_subgraph.es["weight"])
+        elif club_property.startswith('intensity'):
             numerator = sum(rich_subgraph.es["weight"])
 
             if numerator==0:
