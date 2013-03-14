@@ -75,6 +75,31 @@ def directed_spr(G, n_rewires=10, preserve='out', average_weight_by_node=False):
         i += 1
     return g
 
+def plot_rich_club(phis, ranks, ax=None, alpha=.1, **kwargs):
+
+    from numpy import shape
+    if len(shape(phis))>1:
+        multiple_samples = True
+        y = phis.mean(axis=1)
+        from numpy import std
+        error = std(phis, axis=1)
+    else:
+        y = phis
+        error = 0
+
+    if not ax:
+        import matplotlib.pyplot as plt
+        plt.plot(ranks, y, **kwargs)
+        ax = plt.gca()
+    else:
+        ax.plot(ranks, y, **kwargs)
+
+    if multiple_samples:
+        ax.fill_between(ranks, y-error, y+error, alpha=alpha, **kwargs)
+
+    xlims = (min(ranks), max(ranks))
+    ax.set_xlim(xlims)
+    return ax
 
 def threshold_score(scores, rank=90.0, mode='percentile', highest=True,
         **kwargs):
