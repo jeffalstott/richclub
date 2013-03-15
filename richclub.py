@@ -350,12 +350,23 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
         control_rc_coefficient = zeros(len(rank))
         for i in range(len(control)):
 
-            random_graph = Graph.Weighted_Adjacency(
-                control[i].toarray().tolist())
+            control_graph = control[i]
+
+            if type(control_graph) != list:
+                if type(control_graph)==ndarray:
+                    control_graph = control_graph.tolist()
+                else: 
+                    from scipy.sparse import csc
+                    if type(control_graph) == csc.csc_matrix:
+                        control_graph - control_graph.toarray().tolist()
+                    else:
+                        raise TypeError("Can't parse the control graph type.")
+
+            control_graph = Graph.Weighted_Adjacency(control_graph)
 
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
-                    random_graph, rank=rank, **kwargs)
+                    control_graph, rank=rank, **kwargs)
 
         control_rc_coefficient = control_rc_coefficient / len(control)
 
