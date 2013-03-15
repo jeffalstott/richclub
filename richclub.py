@@ -326,7 +326,7 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
 
     from numpy import zeros
 
-    if not preserve:
+    if not control and not preserve:
         if not graph.is_weighted():
             #For unweighted graphs, preserving out strength vs in strength does
             #the same thing, so we'll just assign something to use.
@@ -341,7 +341,7 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
             raise ValueError("Must provide explicit control graphs or rewiring"
                              "preservation for this richness option.")
 
-    if control is not None:
+    if control:
         from igraph import Graph
         from numpy import ndarray
         if ~(type(control) == list or type(control) == ndarray):
