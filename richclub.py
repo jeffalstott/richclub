@@ -161,7 +161,9 @@ def richness_scores(graph, richness=None):
 
 def rich_club_coefficient(graph, richness=None,
         club_property='intensity_P_wm',
-        rank=None, weightmax='max', candidate_edges_function=None,
+        rank=None,
+        controls=None,
+        weightmax='max', candidate_edges_function=None,
         directed_local_drawn_from='out_links',
         **kwargs):
 
@@ -309,8 +311,51 @@ def rich_club_coefficient(graph, richness=None,
         else:
             raise ValueError("Unrecognized club_property option.")
 
-    return rc_coefficient
+    if controls is None:
+        return rc_coefficient
+    else:
+        from igraph import Graph
+        from numpy import ndarray
+        if ~(type(controls) == list or type(controls) == ndarray):
+            controls = list(controls)
 
+        control_rc_coefficient = zeros(len(rank))
+        for i in range(len(controls)):
+
+            control_graph = controls[i]
+
+            if type(control_graph) != list:
+                if type(control_graph)==ndarray:
+                    control_graph = control_graph.tolist()
+                else: 
+                    from scipy.sparse import csc
+                    if type(control_graph) == csc.csc_matrix:
+                        control_graph - control_graph.toarray().tolist()
+                    else:
+                        raise TypeError("Can't parse the control graph type.")
+
+            from numpy import transpose, all
+            if all(control_graph==transpose(control_graph)):
+                mode = 1
+            else:
+                mode = 0
+
+            control_graph = Graph.Weighted_Adjacency(control_graph, mode=mode)
+
+            control_rc_coefficient = control_rc_coefficient +\
+                rich_club_coefficient(
+                    control_graph,
+                    club_property=club_property,
+                    rank=rank,
+                    controls=None,
+                    weightmax=weightmax,
+                    candidate_edges_function=candidate_edges_function,
+                    directed_local_drawn_from=directed_local_drawn_from,
+                    **kwargs)
+
+        control_rc_coefficient = control_rc_coefficient / len(controls)
+
+        return rc_coefficient / control_rc_coefficient
 
 def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
                                      preserve=None, rank=None, **kwargs):
@@ -362,7 +407,13 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
                     else:
                         raise TypeError("Can't parse the control graph type.")
 
-            control_graph = Graph.Weighted_Adjacency(control_graph)
+            from numpy import transpose, all
+            if all(control_graph==transpose(control_graph)):
+                mode = 1
+            else:
+                mode = 0
+
+            control_graph = Graph.Weighted_Adjacency(control_graph, mode=mode)
 
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
