@@ -160,7 +160,7 @@ def richness_scores(graph, richness=None):
     return scores
 
 def rich_club_coefficient(graph, richness=None,
-        club_property='intensity_P_wm',
+        club_property='C',
         rank=None,
         controls=None,
         weightmax='max', candidate_edges_function=None,
@@ -199,6 +199,8 @@ def rich_club_coefficient(graph, richness=None,
 
         if club_property==None or club_property=='C':
             rc_coefficient[i] = sum(rich_subgraph.es["weight"])
+        elif type(club_property)==FunctionType:
+            rc_coefficient[i] = club_property(graph, rich_node_indices)
         elif club_property.startswith('intensity'):
             numerator = sum(rich_subgraph.es["weight"])
 
@@ -306,8 +308,6 @@ def rich_club_coefficient(graph, richness=None,
         elif club_property == 'codelength':
             infomap = rich_subgraph.community_infomap(edge_weights=rich_subgraph.es["weight"])
             rc_coefficient[i] = infomap.codelength
-        elif type(club_property)==FunctionType:
-            rc_coefficient[i] = club_property(graph, rich_node_indices)
         else:
             raise ValueError("Unrecognized club_property option.")
 
