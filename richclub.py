@@ -110,11 +110,13 @@ def threshold_score(scores, rank=90.0, mode='percentile', highest=True,
     if mode == 'percentile':
         from scipy.stats import scoreatpercentile
         threshold_score = scoreatpercentile(scores, rank)
+    elif mode == 'raw':
+        threshold_score = rank
 
     return threshold_score
 
 
-def rich_nodes(graph, scores=None, highest=True, **kwargs):
+def rich_nodes(graph, scores=None, highest=True, mode='percentile', **kwargs):
     """Extracts the "rich club" of the given graph, i.e. the subgraph spanned
     between vertices having the top X% of some score.
 
@@ -130,7 +132,7 @@ def rich_nodes(graph, scores=None, highest=True, **kwargs):
     if scores is None:
         scores = graph.degree()
 
-    ts = threshold_score(scores, highest=highest, **kwargs)
+    ts = threshold_score(scores, highest=highest, mode=mode, **kwargs)
 
     from numpy import where
     if highest:
@@ -165,15 +167,8 @@ def rich_club_coefficient(graph, richness=None,
         controls=None,
         weightmax='max', candidate_edges_function=None,
         directed_local_drawn_from='out_links',
+        mode='percentile',
         **kwargs):
-
-    from types import FunctionType, FloatType
-    if type(rank) == FloatType:
-        rank = [rank]
-
-    if rank is None:
-        from numpy import arange
-        rank = arange(10.0, 100.0, 10.0)
 
     if not graph.is_weighted():
         from numpy import ones
@@ -187,13 +182,25 @@ def rich_club_coefficient(graph, richness=None,
 
     scores = richness_scores(graph, richness=richness)
 
+    from types import FunctionType, FloatType
+    if type(rank) == FloatType:
+        rank = [rank]
+
+    if rank is None:
+        if mode=='percentile':
+            from numpy import arange
+            rank = arange(10.0, 100.0, 10.0)
+        elif mode=='raw':
+            from numpy import unique
+            rank = unique(scores)
+
     from numpy import zeros
     rc_coefficient = zeros(len(rank))
 
     for i in range(len(rank)):
 
         rich_node_indices = rich_nodes(
-            graph, rank=rank[i], scores=scores, **kwargs)
+            graph, rank=rank[i], scores=scores, mode=mode, **kwargs)
 
         rich_subgraph = graph.subgraph(rich_node_indices)
 
@@ -324,23 +331,28 @@ def rich_club_coefficient(graph, richness=None,
 
             control_graph = controls[i]
 
-            if type(control_graph) != list:
-                if type(control_graph)==ndarray:
-                    control_graph = control_graph.tolist()
-                else: 
-                    from scipy.sparse import csc
-                    if type(control_graph) == csc.csc_matrix:
-                        control_graph - control_graph.toarray().tolist()
-                    else:
-                        raise TypeError("Can't parse the control graph type.")
+            if type(control_graph) != Graph:
+#If the graph isn't an igraph Graph, we'll turn it into a list, if it's
+#not already one.
+                if type(control_graph) != list:
+                    if type(control_graph)==ndarray:
+                        control_graph = control_graph.tolist()
+                    else: 
+                        from scipy.sparse import csc
+                        if type(control_graph) == csc.csc_matrix:
+                            control_graph - control_graph.toarray().tolist()
+                        else:
+                            raise TypeError("Can't parse the control"
+                                    "graph type.")
 
-            from numpy import transpose, all
-            if all(control_graph==transpose(control_graph)):
-                mode = 1
-            else:
-                mode = 0
+                from numpy import transpose, all
+                if all(control_graph==transpose(control_graph)):
+                    mode = 1
+                else:
+                    mode = 0
 
-            control_graph = Graph.Weighted_Adjacency(control_graph, mode=mode)
+                control_graph = Graph.Weighted_Adjacency(control_graph,
+                        mode=mode)
 
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
