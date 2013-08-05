@@ -104,7 +104,7 @@ def plot_rich_club(phis, ranks, ax=None, alpha=.1, **kwargs):
 
 def threshold_score(scores, rank=90.0, mode='percentile', highest=True,
         **kwargs):
-    if not highest:
+    if not highest and mode == 'percentile':
         rank = 100 - rank
 
     if mode == 'percentile':
@@ -151,6 +151,8 @@ def richness_scores(graph, richness=None):
         scores = graph.strength(graph.vs, mode=1, weights=graph.es["weight"])
     elif richness == 'in_strength':
         scores = graph.strength(graph.vs, mode=2, weights=graph.es["weight"])
+    elif richness=='degree':
+        scores = graph.degree()
     elif type(richness)==FunctionType:
         scores = richness(graph)
     else:
@@ -347,12 +349,12 @@ def rich_club_coefficient(graph, richness=None,
 
                 from numpy import transpose, all
                 if all(control_graph==transpose(control_graph)):
-                    mode = 1
+                    directed_mode = 1
                 else:
-                    mode = 0
+                    directed_mode = 0
 
                 control_graph = Graph.Weighted_Adjacency(control_graph,
-                        mode=mode)
+                        mode=directed_mode)
 
             control_rc_coefficient = control_rc_coefficient +\
                 rich_club_coefficient(
@@ -360,6 +362,7 @@ def rich_club_coefficient(graph, richness=None,
                     club_property=club_property,
                     rank=rank,
                     controls=None,
+                    mode=mode,
                     weightmax=weightmax,
                     candidate_edges_function=candidate_edges_function,
                     directed_local_drawn_from=directed_local_drawn_from,
@@ -451,3 +454,28 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
     else:
         raise ValueError("Must provide explicit control graphs if"
                          "rewiring option is deactivated.")
+
+def preserve_strength(G, randomize_topology=False, method='vl'):
+    from numpy.random import permutation
+    from numpy import array, unique, where, mean
+    from igraph import Graph
+
+    degree_sequence = G.degree()
+    strength_sequence = array(G.strength(weights='weight'))
+
+    if randomize_topology:
+        g = Graph.Degree_Sequence(degree_sequence, method=method)
+    else:
+        g = G.copy()
+
+    for k in unique(degree_sequence):
+        k_ind = where(array(degree_sequence)==k)[0]#g.vs.select(_degree_eq=k)
+#        k_ind = k_graph.indices
+        strength_sequence[k_ind] = strength_sequence[permutation(k_ind)]
+
+    mean_k = mean(degree_sequence)
+    mean_s = mean(strength_sequence)
+
+    for e in g.es:
+        e["weight"] = (mean_k/mean_s) * strength_sequence[e.source]*strength_sequence[e.target] / (degree_sequence[e.source]*degree_sequence[e.target])
+    return g
