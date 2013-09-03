@@ -1,3 +1,40 @@
+from numpy import where
+
+class RC(object):
+    
+    def __init__(self,g,mode=2, ranks=None):
+        from numpy import array, argsort
+        self.g = g
+        self.scores = array(g.strength(weights='weight',mode=mode))
+        self.order = argsort(self.scores)
+        self.n_nodes = g.vcount()
+        
+        self.ranks = ranks
+        
+    def _ts(self, rank):
+        s = where(self.scores<rank)[0]
+        self.scores = self.scores[self.scores>rank]
+        return s
+    
+    def _rc(self, n):
+        #ts = self._ts(rank)
+        self.G.delete_vertices(str(n))
+        return self.G
+    
+    def phis(self,**kwargs):
+        #self.G = self.g.copy()
+        #self.G.vs['name'] = map(str,range(self.G.vcount()))
+        #return [sum(self._rc(n).es['weight']) for n in self.order]
+        f = lambda g: sum(g.es['weight'])
+        return self.fun(f,**kwargs)
+    
+    def fun(self,f, ns=None):
+        if ns is None:
+            ns = self.n_nodes
+        self.G = self.g.copy()
+        self.G.vs['name'] = map(str,range(self.G.vcount()))
+        return [f(self._rc(n)) for n in self.order[:ns]]
+
 def directed_spr(G, n_rewires=10, preserve='out', average_weight_by_node=False):
     from numpy.random import randint
 
@@ -117,30 +154,16 @@ def threshold_score(scores, rank=90.0, mode='percentile', highest=True,
 
 
 def rich_nodes(graph, scores=None, highest=True, mode='percentile', **kwargs):
-    """Extracts the "rich club" of the given graph, i.e. the subgraph spanned
-    between vertices having the top X% of some score.
-
-    Scores are given by the vertex degrees by default.
-
-    @param graph:    the graph to work on
-    @param rank: the rank of vertices to extract; must be between 0 and 1.
-    @param highest:  whether to extract the subgraph spanned by the highest or
-                     lowest scores.
-    @param scores:   the scores themselves. C{None} uses the vertex degrees.
-    """
 
     if scores is None:
         scores = graph.degree()
 
     ts = threshold_score(scores, highest=highest, mode=mode, **kwargs)
 
-    from numpy import where
     if highest:
-        targets = where(scores >= ts)[0]
+        return where(scores >= ts)[0]
     else:
-        targets = where(scores <= ts)[0]
-
-    return targets
+        return where(scores <= ts)[0]
 
 def richness_scores(graph, richness=None):
     from types import FunctionType
@@ -199,6 +222,9 @@ def rich_club_coefficient(graph, richness=None,
     from numpy import zeros
     rc_coefficient = zeros(len(rank))
 
+    #return  [sum(graph.subgraph(where(
+    #    graph.strength(weights='weight',mode=2)>rank[i])[0]
+    #    ).es['weight']) for i in range(len(rank))]
     for i in range(len(rank)):
 
         rich_node_indices = rich_nodes(
@@ -455,27 +481,92 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
         raise ValueError("Must provide explicit control graphs if"
                          "rewiring option is deactivated.")
 
-def preserve_strength(G, randomize_topology=False, method='vl'):
-    from numpy.random import permutation
-    from numpy import array, unique, where, mean
-    from igraph import Graph
-
-    degree_sequence = G.degree()
-    strength_sequence = array(G.strength(weights='weight'))
-
+def preserve_strength(g, randomize_topology=False, preserve_mode='estimate_both', permute_strength=True, randomize_method='vl'):
+    from numpy import array
+    out_degree = g.degree(mode=1)
+    in_degree = g.degree(mode=2)
+   
     if randomize_topology:
-        g = Graph.Degree_Sequence(degree_sequence, method=method)
+        from igrpah import Graph
+        if g.is_directed():
+            #Check if all edges are bidirectional.
+            #If so, create a random graph with only bidirectional edges.
+            G = g.copy()
+            G.to_undirected(mode=False)
+            if all(array(G.count_multiple())==2):
+                G = Graph.Degree_Sequence(out_degree, method=randomize_method)
+                G.to_directed()
+            else:
+                G = g.copy()
+                G.rewire()
+        else:
+            G = Graph.Degree_Sequence(out_degree, method=randomize_method)
     else:
-        g = G.copy()
+        G = g.copy()
 
-    for k in unique(degree_sequence):
-        k_ind = where(array(degree_sequence)==k)[0]#g.vs.select(_degree_eq=k)
-#        k_ind = k_graph.indices
-        strength_sequence[k_ind] = strength_sequence[permutation(k_ind)]
+    if preserve_mode in ['estimate_both', 3]:
+        
+        out_strength = array(g.strength(mode=1, weights='weight'))
+        in_strength = array(g.strength(mode=2, weights='weight'))
 
-    mean_k = mean(degree_sequence)
-    mean_s = mean(strength_sequence)
+        if permute_strength:
+            from numpy.random import permutation
+            from numpy import unique
+            out_in_sequence = array(zip(out_degree, in_degree))
+            for k in unique(out_in_sequence):
+                k_ind = where((out_in_sequence == k).all(axis=1))[0]
+                new_ind = permutation(k_ind)
+                out_strength[k_ind] = out_strength[new_ind]
+                in_strength[k_ind] = in_strength[new_ind]
+    
+        from numpy import mean
+        mean_k = mean([out_degree,in_degree])
+        mean_s = mean([out_strength,in_strength])
+        
+        for e in G.es:
+            e["weight"] = ( (mean_k/mean_s) * out_strength[e.source] * 
+                in_strength[e.target] /
+                (out_degree[e.source]*in_degree[e.target]) )
+        return G
+    
+    elif preserve_mode in ['out', 1]:
+        preserve_mode = 1
+    elif preserve_mode in ['in', 2]:
+        preserve_mode = 2
+    
+    ind = [g.incident(v,mode=preserve_mode) for v in range(g.vcount())]
+    weights = g.es[sum(ind)]['weight']
+    from numpy.random import shuffle
+    map(shuffle,ind)
+    G.es[sum(ind)]['weight'] = weights
 
-    for e in g.es:
-        e["weight"] = (mean_k/mean_s) * strength_sequence[e.source]*strength_sequence[e.target] / (degree_sequence[e.source]*degree_sequence[e.target])
-    return g
+    return G
+
+def just_plot_rc(rc, rc_controls, ax=None, x=None, top_limit=None, **kwargs):
+    
+    if x is None:
+        from numpy import arange
+        x = arange(len(rc))
+    
+    if ax is None:
+        ax = gca()
+            
+    from scipy.stats import scoreatpercentile
+    upper95 = array([scoreatpercentile(rc_controls[:,i], 97.5) for i in range(len(x))])
+    lower95 = array([scoreatpercentile(rc_controls[:,i], 2.5) for i in range(len(x))])
+    
+    control_mean = mean(rc_controls,axis=0)
+    rc_norm = rc/control_mean
+    rc_norm = ma.masked_invalid(rc_norm)
+
+    ax.plot(x, rc_norm, linewidth=1, color='k')
+    ax.plot(ax.get_xlim(), (1,1), linestyle='--', color='k')
+    ax.set_ylim(bottom=0)
+    if ax.get_ylim()[1]<2:
+        ax.set_ylim(top=2)
+    if top_limit:
+        ax.set_ylim(top=top_limit)
+    ax.set_ylabel(r"$RC_{norm}$")#+"\n (normalized rich club coefficient)")
+    ax.fill_between(x, 1,rc_norm, where=(rc>upper95) | (rc<lower95), **kwargs)
+    
+    return ax
