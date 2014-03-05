@@ -1,30 +1,53 @@
 from numpy import where
 
+def fast_RC(A, sequence=None):
+    from numpy import sum, argsort, arange
+    strengths = sum(A, axis=0)
+    if sequence is None:
+        sequence = argsort(strengths)
+    A = A[sequence][:,sequence]
+    x = [sum(A[n:,n:]) for n in arange(len(A))]
+    return x
+
 class RC(object):
     
-    def __init__(self,g,mode=2, ranks=None):
-        from numpy import array, argsort
+    def __init__(self,g,scores=None,mode=2, ranks=None):
+	from numpy import argsort
         self.g = g
-        self.scores = array(g.strength(weights='weight',mode=mode))
+        if scores is None:
+	    from numpy import array
+            self.scores = array(g.strength(weights='weight',mode=mode))
+        else:
+            self.scores = scores
         self.order = argsort(self.scores)
         self.n_nodes = g.vcount()
         
-        self.ranks = ranks
+        if ranks is not None:
+            self.ranks = ranks
+	    from numpy import where
+            self.order = [where((self.ranks[r]<=self.scores) * 
+                                (self.scores<self.ranks[r+1]))[0] for r in range(len(self.ranks)-1)]
+
+        #    from bisect import bisect_left
+        #    self.tiers = [bisect_left(self.ranks, score) for score in self.scores]
+        #    order = argsort(self.tiers)
+        #    tier_breaks = concatenate(([0],where(diff(self.tiers))[0]+1))
+        #    self.order = [order[tier_breaks[i]:tier_breaks[i+1]] for i in arange(len(tier_breaks)-1)]
         
     def _ts(self, rank):
+	from numpy import where
         s = where(self.scores<rank)[0]
         self.scores = self.scores[self.scores>rank]
         return s
     
     def _rc(self, n):
-        #ts = self._ts(rank)
-        self.G.delete_vertices(str(n))
+	try:
+            self.G.delete_vertices(map(str,n))
+	except TypeError:
+            self.G.delete_vertices(str(n))
         return self.G
     
     def phis(self,**kwargs):
-        #self.G = self.g.copy()
-        #self.G.vs['name'] = map(str,range(self.G.vcount()))
-        #return [sum(self._rc(n).es['weight']) for n in self.order]
         f = lambda g: sum(g.es['weight'])
         return self.fun(f,**kwargs)
     
@@ -482,25 +505,51 @@ def normalized_rich_club_coefficient(graph, rewire=10, average=1, control=None,
                          "rewiring option is deactivated.")
 
 def preserve_strength(g, randomize_topology=False, preserve_mode='estimate_both', permute_strength=True, randomize_method='vl'):
-    from numpy import array
+    from numpy import array, ndarray
+    from scipy.sparse import csc
+    if (type(g)==ndarray or type(g)==csc.csc_matrix) and preserve_mode in ['estimate_both', 3] and not randomize_topology:
+        A = g
+        from numpy import sum
+        out_strength = sum(A, axis=1)
+        in_strength = sum(A, axis=0)
+        adj = 1*(A>0)
+        out_degree = sum(adj, axis=1)
+        in_degree = sum(adj, axis=0)
+              
+        if permute_strength:
+            from numpy.random import permutation
+            from numpy import unique
+            out_in_sequence = array(zip(out_degree, in_degree))
+            for k in unique(out_in_sequence):
+                k_ind = where((out_in_sequence == k).all(axis=1))[0]
+                new_ind = permutation(k_ind)
+                out_strength[k_ind] = out_strength[new_ind]
+                in_strength[k_ind] = in_strength[new_ind]
+
+        from numpy import mean, outer, logical_not
+        mean_k = mean([out_degree,in_degree])
+        mean_s = mean([out_strength,in_strength])
+        G = (mean_k/mean_s) * outer(out_strength,in_strength) /outer(out_degree,in_degree)
+        G[logical_not(adj)] = 0
+        return G
+
     out_degree = g.degree(mode=1)
     in_degree = g.degree(mode=2)
    
     if randomize_topology:
-        from igrpah import Graph
         if g.is_directed():
             #Check if all edges are bidirectional.
             #If so, create a random graph with only bidirectional edges.
             G = g.copy()
             G.to_undirected(mode=False)
             if all(array(G.count_multiple())==2):
-                G = Graph.Degree_Sequence(out_degree, method=randomize_method)
+                G = g.Degree_Sequence(out_degree, method=randomize_method)
                 G.to_directed()
             else:
                 G = g.copy()
                 G.rewire()
         else:
-            G = Graph.Degree_Sequence(out_degree, method=randomize_method)
+            G = g.Degree_Sequence(out_degree, method=randomize_method)
     else:
         G = g.copy()
 
@@ -534,6 +583,7 @@ def preserve_strength(g, randomize_topology=False, preserve_mode='estimate_both'
     elif preserve_mode in ['in', 2]:
         preserve_mode = 2
     
+    from numpy import sum
     ind = [g.incident(v,mode=preserve_mode) for v in range(g.vcount())]
     weights = g.es[sum(ind)]['weight']
     from numpy.random import shuffle
@@ -543,6 +593,8 @@ def preserve_strength(g, randomize_topology=False, preserve_mode='estimate_both'
     return G
 
 def just_plot_rc(rc, rc_controls, ax=None, x=None, top_limit=None, **kwargs):
+    from numpy import array, mean
+    from numpy.ma import masked_invalid
     
     if x is None:
         from numpy import arange
@@ -557,7 +609,7 @@ def just_plot_rc(rc, rc_controls, ax=None, x=None, top_limit=None, **kwargs):
     
     control_mean = mean(rc_controls,axis=0)
     rc_norm = rc/control_mean
-    rc_norm = ma.masked_invalid(rc_norm)
+    rc_norm = masked_invalid(rc_norm)
 
     ax.plot(x, rc_norm, linewidth=1, color='k')
     ax.plot(ax.get_xlim(), (1,1), linestyle='--', color='k')
@@ -570,3 +622,21 @@ def just_plot_rc(rc, rc_controls, ax=None, x=None, top_limit=None, **kwargs):
     ax.fill_between(x, 1,rc_norm, where=(rc>upper95) | (rc<lower95), **kwargs)
     
     return ax
+
+def graph_from_sparse(data, directed=None):
+    from igraph import Graph
+    sources, targets = data.nonzero()
+    
+    if directed==None:
+        #Check for being symmetric, and thus assumed to be undirected. We can't just do data.T==data because Scipy's sparse arrays can't handle it.
+        if all([data.T[x,y]==data[x,y] for x in range(data.shape[0]) for y in range(data.shape[1])]):
+            #This is SUPER SLOW. Need to speed up if you want to actually use it.
+            directed=False
+        else:
+            directed=True
+    from numpy import array
+    g = Graph(zip(sources, targets), directed=directed, edge_attrs={'weight': array(data[sources, targets])[0]})
+    if g.is_directed():
+        return g
+    else:
+        return g.simplify(combine_edges="first")
