@@ -628,12 +628,8 @@ def graph_from_sparse(data, directed=None):
     sources, targets = data.nonzero()
     
     if directed==None:
-        #Check for being symmetric, and thus assumed to be undirected. We can't just do data.T==data because Scipy's sparse arrays can't handle it.
-        if all([data.T[x,y]==data[x,y] for x in range(data.shape[0]) for y in range(data.shape[1])]):
-            #This is SUPER SLOW. Need to speed up if you want to actually use it.
-            directed=False
-        else:
-            directed=True
+        from numpy import all
+        directed = not all(data[sources, targets]==data[targets, sources])
     from numpy import array
     g = Graph(zip(sources, targets), directed=directed, edge_attrs={'weight': array(data[sources, targets])[0]})
     if g.is_directed():
