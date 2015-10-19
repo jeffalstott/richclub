@@ -21,7 +21,7 @@ If you have a network represented a `numpy` array `X` and you want to calculate 
 
 Complex case
 ---
-If you have a network represented as an `igraph` network `X`, and you want to calculate the rich club structure, you can instead create an object for analysis with `this_analysis = richclub.RC(X)`. You can then use `this_analysis.phis` to get the sum of the weights of the links between nodes of a strength rank or higher, for all possible ranks. But `richclub.RC` also allows you customize. Instead of using strengths, you can give each node a precalculated score to threshold on instead: `this_analysis = richclub.RC(X, scores=range(10))`. You can also specificy which threshold ranks to use (instead of just every unique value of score) by specifying them: `this_analysis = richclub.RC(X, scores=range(10), ranks=range(5))`
+If you have a network represented as an `igraph` network `X`, and you want to calculate the rich club structure, you can instead create an object for analysis with `this_analysis = richclub.RC(X)`. You can then use `this_analysis.phis()` to get the sum of the weights of the links between nodes of a strength rank or higher, for all possible ranks. But `richclub.RC` also allows you customize. Instead of using strengths, you can give each node a precalculated score to threshold on instead: `this_analysis = richclub.RC(X, scores=range(10))`. You can also specificy which threshold ranks to use (instead of just every unique value of score) by specifying them: `this_analysis = richclub.RC(X, scores=range(10), ranks=range(5))`
 
 Randomized controls
 ---
