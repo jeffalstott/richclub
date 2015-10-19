@@ -43,3 +43,9 @@ normalized_phis = empirical_phis/average_randomized_phis
 This would calculate the weighted rich clubs of a network, thresholded by degree, normalized by the randomized case where the topology and strength sequence are preserved but weights are allowed to vary. 
 
 
+Dependencies
+===
+- numpy
+- igraph
+
+
