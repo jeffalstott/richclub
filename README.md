@@ -26,7 +26,7 @@ If you have a network represented as an `igraph` network `X`, and you want to ca
 Randomized controls
 ---
 The hard part of calculating rich clubs is determining what is an appropriate randomized control, and then calculating it. The [paper](http://www.nature.com/articles/srep07258) talks about this at length. If you have a network `X`, you can use `richclub.preserve_strength(X)` to generate randomized versions of `X` using a variety of different options. It is rather heavy-duty. Options include whether the controls should:
-- randomize topology (`randomize_topology=False`, randomization method set for `igraph` with `randomize_method='vl'`)
+- randomize topology (`randomize_topology=True`, randomization method set for `igraph` with `randomize_method='vl'`)
 - permute the strengths of the nodes among nodes with the same degrees (`permute_strength=True`)
 - exactly preserve the out-strengths or the in-strengths of the original network (`preserve_mode='out'` vs. `preserve_mode='in'`) or instead approximately preserve both (`preserve_mode='estimate_both'`, method from [Serrano et al. 2006, equation 10](http://arxiv.org/abs/cond-mat/0609029)).
 
