@@ -6,7 +6,7 @@ Jeff Alstott, Pietro Panzarasa, Mikail Rubinov, Edward T. Bullmore & Petra E. VÃ
 . [Scientific Reports 4: 7258](http://www.nature.com/articles/srep07258)
 
 
-This code is really overgrown and is mainly an artifact of my learning process as we did figured out how to best measure rich clubs. Now that the learning process is done, all that remains is very simple:
+This code is really overgrown and is mainly an artifact of my learning process as we figured out how to best measure rich clubs. Now that the learning process is done, all that remains is very simple:
 
 1. Measure the amount of weight on the links between nodes of a particular strength rank or higher. The sum of these weights is called `phi`.
 2. Consider what the randomized controls should be, and make a lot of randomized controls. Calculate `phi` for each control, and average it.
