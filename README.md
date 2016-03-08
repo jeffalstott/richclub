@@ -35,8 +35,9 @@ What a basic workflow could look like
 -----
 ```
 from richclub import preserve_strength, RC
+from numpy import mean
 empirical_phis = RC(X, scores=X.degree()).phis()
-average_randomized_phis = mean([RC(preserve_strength(X), scores=X.degree()).phis() for i in range(1000)])
+average_randomized_phis = mean([RC(preserve_strength(X), scores=X.degree()).phis() for i in range(1000)], axis=0)
 normalized_phis = empirical_phis/average_randomized_phis
 ```
 
