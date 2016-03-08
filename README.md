@@ -2,9 +2,10 @@
 Python package for rich club analysis and detection of graphs, using igraph
 
 This is a smattering of code that was used in the process of creating the paper:
-Jeff Alstott, Pietro Panzarasa, Mikail Rubinov, Edward T. Bullmore & Petra E. Vértes. (2014). A Unifying Framework for Measuring Weighted Rich Clubs
-. [Scientific Reports 4: 7258](http://www.nature.com/articles/srep07258)
 
+Jeff Alstott, Pietro Panzarasa, Mikail Rubinov, Edward T. Bullmore & Petra E. Vértes. (2014). A Unifying Framework for Measuring Weighted Rich Clubs. [Scientific Reports 4: 7258](http://www.nature.com/articles/srep07258)
+
+(Academics, if you use this code please cite the paper.)
 
 This code is really overgrown and is mainly an artifact of my learning process as we figured out how to best measure rich clubs. Now that the learning process is done, all that remains is very simple:
 
